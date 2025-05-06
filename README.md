@@ -2,12 +2,93 @@
 
 This project implements a full pipeline for detecting and classifying insects on yellow sticky traps using YOLOv8. The pipeline includes data preprocessing, model training, and evaluation.
 
+## Setup
+
+### Virtual Environment
+
+It's recommended to use a virtual environment to manage dependencies. Here's how to set it up:
+
+1. Create a virtual environment:
+```bash
+# Using venv (Python 3.3+)
+python -m venv venv
+
+# Or using conda
+conda create -n insect_detection python=3.8
+```
+
+2. Activate the virtual environment:
+```bash
+# Using venv
+source venv/bin/activate  # On Linux/Mac
+# or
+.\venv\Scripts\activate  # On Windows
+
+# Or using conda
+conda activate insect_detection
+```
+
+3. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+4. Deactivate when done:
+```bash
+deactivate  # For venv
+# or
+conda deactivate  # For conda
+```
+
 ## Dataset
 
 The project uses the [Yellow Sticky Traps dataset](https://www.kaggle.com/datasets/friso1987/yellow-sticky-traps) from Kaggle, which contains:
 - 284 `.jpg` images
 - 284 `.xml` annotations (Pascal VOC format)
 - Three insect classes: Macrolophus (MR), Nesidiocoris (NC), and Whiteflies (WF)
+
+### Dataset Analysis
+
+The dataset can be analyzed using the provided script:
+
+```bash
+python src/data/analyze_dataset.py --data_dir data --output dataset_stats.json
+```
+
+This will generate:
+1. A JSON file with detailed statistics about:
+   - Total number of images and objects
+   - Class distribution
+   - Image size statistics (width, height)
+   - Object size statistics per class
+2. A visualization file (`dataset_analysis.png`) showing:
+   - Class distribution bar plot
+   - Image size distribution scatter plot
+   - Object size distribution scatter plot
+   - Objects per image histogram
+
+### Downloading the Dataset
+
+1. Create a Kaggle account if you don't have one
+2. Get your Kaggle API credentials:
+   - Go to https://www.kaggle.com/settings/account
+   - Scroll to the "API" section
+   - Click "Create New API Token"
+   - This will download a `kaggle.json` file
+
+3. Set up Kaggle credentials:
+```bash
+mkdir -p ~/.kaggle
+cp path/to/downloaded/kaggle.json ~/.kaggle/
+chmod 600 ~/.kaggle/kaggle.json
+```
+
+4. Run the download script:
+```bash
+./download_dataset.sh
+```
+
+The dataset will be downloaded and extracted to the `data/` directory.
 
 ## Features
 
