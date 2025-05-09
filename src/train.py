@@ -1,69 +1,50 @@
 from ultralytics import YOLO
 from pathlib import Path
 import yaml
+import argparse
 import shutil
 
-def create_dataset_yaml(data_dir: str, output_path: str):
+def create_dataset_yaml(base_dir, output_path):
     """
-    Create YAML configuration file for YOLOv8 training.
-    
-    Args:
-        data_dir: Directory containing the dataset
-        output_path: Path to save the YAML file
+    Tạo file dataset.yaml cho YOLOv8 từ cấu trúc tiled_data đã chia train/test.
     """
-    data_dir = Path(data_dir)
-    
-    # Create YAML content
+    base_dir = Path(base_dir)
     yaml_content = {
-        'path': str(data_dir.absolute()),
-        'train': 'train/images',
-        'val': 'val/images',
-        'test': 'test/images',
-        'names': {
-            0: 'Macrolophus',
-            1: 'Nesidiocoris',
-            2: 'Whiteflies'
-        }
+        'path': str(base_dir.absolute()),
+        'train': 'train_split/images',
+        'val': 'test/images',
+        'names': ['WF', 'MR', 'NC']
     }
-    
-    # Save YAML file
     with open(output_path, 'w') as f:
         yaml.dump(yaml_content, f, default_flow_style=False)
+    print(f"Created dataset.yaml at {output_path}")
 
-def train_model(data_yaml: str,
-                output_dir: str,
-                model_size: str = 'm',
-                epochs: int = 100,
-                batch_size: int = 16,
-                img_size: int = 864,
-                device: str = '0'):
-    """
-    Train YOLOv8 model on the dataset.
-    
-    Args:
-        data_yaml: Path to dataset YAML file
-        output_dir: Directory to save model and results
-        model_size: Model size ('n', 's', 'm', 'l', 'x')
-        epochs: Number of training epochs
-        batch_size: Batch size
-        img_size: Input image size
-        device: Device to use for training ('0' for GPU, 'cpu' for CPU)
-    """
-    # Create output directory
-    output_dir = Path(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Initialize model
-    model = YOLO(f'yolov8{model_size}.pt')
-    
-    # Train model
+def main():
+    parser = argparse.ArgumentParser(description='Train YOLOv8 on tiled insect dataset')
+    parser.add_argument('--data_dir', type=str, default='data/tiled_data', help='Path to tiled dataset directory')
+    parser.add_argument('--output_dir', type=str, default='runs/yolov8', help='Directory to save model and results')
+    parser.add_argument('--model_size', type=str, default='m', choices=['n','s','m','l','x'], help='YOLOv8 model size')
+    parser.add_argument('--epochs', type=int, default=100, help='Number of training epochs')
+    parser.add_argument('--batch_size', type=int, default=16, help='Batch size')
+    parser.add_argument('--img_size', type=int, default=864, help='Input image size')
+    parser.add_argument('--device', type=str, default='0', help='Device for training (0 for GPU, cpu for CPU)')
+    args = parser.parse_args()
+
+    # Tạo file dataset.yaml
+    dataset_yaml = Path(args.data_dir) / 'dataset.yaml'
+    create_dataset_yaml(args.data_dir, dataset_yaml)
+
+    # Khởi tạo model
+    model = YOLO(f'yolov8{args.model_size}.pt')
+
+    # Train
     results = model.train(
-        data=data_yaml,
-        epochs=epochs,
-        batch=batch_size,
-        imgsz=img_size,
-        device=device,
-        project=str(output_dir),
+        data=str(dataset_yaml),
+        epochs=args.epochs,
+        batch=args.batch_size,
+        imgsz=args.img_size,
+        device=args.device,
+        project=args.output_dir,
         name='train',
         exist_ok=True,
         pretrained=True,
@@ -72,48 +53,27 @@ def train_model(data_yaml: str,
         seed=42,
         deterministic=True
     )
-    
-    # Save best model
-    best_model_path = output_dir / 'train' / 'weights' / 'best.pt'
-    if best_model_path.exists():
-        shutil.copy2(best_model_path, output_dir / 'best.pt')
-    
-    return results
 
-def validate_model(model_path: str,
-                  data_yaml: str,
-                  output_dir: str,
-                  batch_size: int = 16,
-                  img_size: int = 864,
-                  device: str = '0'):
-    """
-    Validate trained model on test set.
-    
-    Args:
-        model_path: Path to trained model weights
-        data_yaml: Path to dataset YAML file
-        output_dir: Directory to save validation results
-        batch_size: Batch size
-        img_size: Input image size
-        device: Device to use for validation
-    """
-    # Create output directory
-    output_dir = Path(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Load model
-    model = YOLO(model_path)
-    
-    # Validate model
-    results = model.val(
-        data=data_yaml,
-        batch=batch_size,
-        imgsz=img_size,
-        device=device,
-        project=str(output_dir),
+    # Lưu best.pt về output_dir
+    best_model_path = Path(args.output_dir) / 'train' / 'weights' / 'best.pt'
+    if best_model_path.exists():
+        shutil.copy2(best_model_path, Path(args.output_dir) / 'best.pt')
+        print(f"Best model saved to {Path(args.output_dir) / 'best.pt'}")
+    else:
+        print("Warning: best.pt not found!")
+
+    # Validate trên val set
+    print("\nValidating on val set...")
+    results_val = model.val(
+        data=str(dataset_yaml),
+        batch=args.batch_size,
+        imgsz=args.img_size,
+        device=args.device,
+        project=args.output_dir,
         name='val',
-        exist_ok=True,
-        split='test'
+        exist_ok=True
     )
-    
-    return results 
+    print("Validation complete.")
+
+if __name__ == '__main__':
+    main() 

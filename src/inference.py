@@ -6,6 +6,7 @@ from ultralytics import YOLO
 import torch
 from dataclasses import dataclass
 import json
+import argparse
 
 @dataclass
 class Detection:
@@ -31,12 +32,18 @@ def create_tiles(image: np.ndarray, tile_size: int = 864, overlap: float = 0.15)
     stride = int(tile_size * (1 - overlap))
     
     tiles = []
+    positions = []
     for y in range(0, height - tile_size + 1, stride):
         for x in range(0, width - tile_size + 1, stride):
-            tile = image[y:y + tile_size, x:x + tile_size]
+            x1 = min(x + tile_size, width)
+            y1 = min(y + tile_size, height)
+            tile = np.zeros((tile_size, tile_size, 3), dtype=image.dtype)
+            tile_img = image[y:y1, x:x1]
+            tile[:y1-y, :x1-x] = tile_img
             tiles.append((tile, (x, y)))
+            positions.append((x, y, x1, y1))
     
-    return tiles
+    return tiles, positions
 
 def convert_to_original_coords(detection: Detection, tile_size: int, img_width: int, img_height: int) -> Tuple[float, float, float, float]:
     """
@@ -161,11 +168,11 @@ def process_image(model: YOLO,
     height, width = image.shape[:2]
     
     # Create tiles
-    tiles = create_tiles(image, tile_size, overlap)
+    tiles, positions = create_tiles(image, tile_size, overlap)
     
     # Process each tile
     all_detections = []
-    for tile, (x, y) in tiles:
+    for tile, pos in zip(tiles, positions):
         # Run inference
         results = model(tile, conf=conf_threshold, device=device)[0]
         
@@ -180,7 +187,7 @@ def process_image(model: YOLO,
                 class_id=class_id,
                 confidence=confidence,
                 bbox=bbox,
-                tile_pos=(x, y)
+                tile_pos=pos
             )
             all_detections.append(detection)
     
@@ -300,4 +307,147 @@ def process_image_file(model_path: str,
     with open(output_dir / f"{Path(image_path).stem}_detections.json", 'w') as f:
         json.dump(detections_json, f, indent=4)
     
-    return detections 
+    return detections
+
+def tile_image(image, tile_size=864, overlap=0.2):
+    h, w = image.shape[:2]
+    stride = int(tile_size * (1 - overlap))
+    tiles = []
+    positions = []
+    for y in range(0, h, stride):
+        for x in range(0, w, stride):
+            x1 = min(x + tile_size, w)
+            y1 = min(y + tile_size, h)
+            tile = np.zeros((tile_size, tile_size, 3), dtype=image.dtype)
+            tile_img = image[y:y1, x:x1]
+            tile[:y1-y, :x1-x] = tile_img
+            tiles.append(tile)
+            positions.append((x, y, x1, y1))
+    return tiles, positions
+
+def run_inference_on_tile(model, tile, conf=0.25, device='0'):
+    results = model(tile, conf=conf, device=device)[0]
+    detections = []
+    for box in results.boxes:
+        class_id = int(box.cls[0])
+        confidence = float(box.conf[0])
+        x_center, y_center, width, height = box.xywh[0].tolist()
+        detections.append([class_id, confidence, x_center, y_center, width, height])
+    return detections
+
+def convert_tile_to_image_coords(dets, tile_pos, tile_size, img_w, img_h):
+    x0, y0, x1, y1 = tile_pos
+    results = []
+    for class_id, conf, x_c, y_c, w, h in dets:
+        # Chuyển về tọa độ tuyệt đối trên tile
+        abs_x = x_c
+        abs_y = y_c
+        # Chuyển về tọa độ tuyệt đối trên ảnh lớn
+        abs_x_img = (abs_x + x0)
+        abs_y_img = (abs_y + y0)
+        results.append({
+            'class_id': class_id,
+            'confidence': conf,
+            'bbox': [
+                abs_x_img / img_w,
+                abs_y_img / img_h,
+                w / img_w,
+                h / img_h
+            ]
+        })
+    return results
+
+def nms(detections: List[dict], iou_thresh=0.5):
+    # detections: list of dict with bbox [x_center, y_center, w, h] (normalized)
+    if not detections:
+        return []
+    dets = np.array([d['bbox'] for d in detections])
+    scores = np.array([d['confidence'] for d in detections])
+    class_ids = np.array([d['class_id'] for d in detections])
+    keep = []
+    idxs = scores.argsort()[::-1]
+    while len(idxs) > 0:
+        i = idxs[0]
+        keep.append(i)
+        ious = []
+        for j in idxs[1:]:
+            if class_ids[i] != class_ids[j]:
+                ious.append(0)
+                continue
+            box1 = dets[i]
+            box2 = dets[j]
+            # xywh to xyxy
+            x1_1 = box1[0] - box1[2]/2
+            y1_1 = box1[1] - box1[3]/2
+            x2_1 = box1[0] + box1[2]/2
+            y2_1 = box1[1] + box1[3]/2
+            x1_2 = box2[0] - box2[2]/2
+            y1_2 = box2[1] - box2[3]/2
+            x2_2 = box2[0] + box2[2]/2
+            y2_2 = box2[1] + box2[3]/2
+            # intersection
+            xi1 = max(x1_1, x1_2)
+            yi1 = max(y1_1, y1_2)
+            xi2 = min(x2_1, x2_2)
+            yi2 = min(y2_1, y2_2)
+            inter_area = max(0, xi2 - xi1) * max(0, yi2 - yi1)
+            area1 = (x2_1 - x1_1) * (y2_1 - y1_1)
+            area2 = (x2_2 - x1_2) * (y2_2 - y1_2)
+            union = area1 + area2 - inter_area
+            iou = inter_area / union if union > 0 else 0
+            ious.append(iou)
+        ious = np.array(ious)
+        idxs = idxs[1:][ious <= iou_thresh]
+    return [detections[i] for i in keep]
+
+def infer_on_image(model, image_path, out_dir, tile_size=864, overlap=0.2, conf=0.25, iou=0.5, device='0'):
+    image = cv2.imread(str(image_path))
+    img_h, img_w = image.shape[:2]
+    tiles, positions = tile_image(image, tile_size, overlap)
+    all_dets = []
+    for tile, pos in zip(tiles, positions):
+        dets = run_inference_on_tile(model, tile, conf, device)
+        dets_img = convert_tile_to_image_coords(dets, pos, tile_size, img_w, img_h)
+        all_dets.extend(dets_img)
+    # NMS trên toàn ảnh lớn
+    final_dets = nms(all_dets, iou_thresh=iou)
+    # Lưu kết quả
+    class_names = {0: 'WF', 1: 'MR', 2: 'NC'}
+    out_img = Path(out_dir) / f"{Path(image_path).stem}_det.jpg"
+    out_json = Path(out_dir) / f"{Path(image_path).stem}_det.json"
+    # Chuyển dict sang object giả lập Detection để dùng visualize_detections
+    class DummyDetection:
+        def __init__(self, class_id, confidence, bbox):
+            self.class_id = class_id
+            self.confidence = confidence
+            self.bbox = bbox
+    vis_dets = [DummyDetection(d['class_id'], d['confidence'], d['bbox']) for d in final_dets]
+    visualize_detections(image, vis_dets, class_names, str(out_img))
+    with open(out_json, 'w') as f:
+        json.dump(final_dets, f, indent=2)
+    print(f"Saved: {out_img}, {out_json}")
+
+def main():
+    parser = argparse.ArgumentParser(description='Inference on large images with YOLOv8 tiling')
+    parser.add_argument('--model', type=str, required=True, help='Path to trained YOLOv8 model (best.pt)')
+    parser.add_argument('--input', type=str, required=True, help='Path to image or directory of images')
+    parser.add_argument('--output', type=str, default='inference_results', help='Directory to save results')
+    parser.add_argument('--tile_size', type=int, default=864)
+    parser.add_argument('--overlap', type=float, default=0.2)
+    parser.add_argument('--conf', type=float, default=0.25)
+    parser.add_argument('--iou', type=float, default=0.5)
+    parser.add_argument('--device', type=str, default='0')
+    args = parser.parse_args()
+
+    model = YOLO(args.model)
+    Path(args.output).mkdir(parents=True, exist_ok=True)
+    input_path = Path(args.input)
+    if input_path.is_file():
+        infer_on_image(model, input_path, args.output, args.tile_size, args.overlap, args.conf, args.iou, args.device)
+    else:
+        images = list(input_path.glob('*.jpg')) + list(input_path.glob('*.png'))
+        for img_path in images:
+            infer_on_image(model, img_path, args.output, args.tile_size, args.overlap, args.conf, args.iou, args.device)
+
+if __name__ == '__main__':
+    main() 

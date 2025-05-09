@@ -39,8 +39,11 @@ ENV/
 *.ipynb
 
 # Project specific
-data/
-output/
+# Bỏ qua dữ liệu gốc, dữ liệu train/test, kết quả inference, kết quả evaluation
+/data/
+/output/
+/inference_results/
+/eval_results.json
 *.pt
 *.pth
 *.weights
@@ -54,4 +57,15 @@ runs/
 !dataset.yaml
 
 # Kaggle credentials
-kaggle.json 
+kaggle.json
+
+# Bỏ qua các file tạm, file hình ảnh kết quả
+*.jpg
+*.png
+*.jpeg
+*.bmp
+*.tif
+*.tiff
+
+# Bỏ qua các file json kết quả detection
+*_det.json 
