@@ -84,6 +84,15 @@ def copy_files(file_list, src_dir, dst_dir):
         dst_image = os.path.join(dst_dir, 'images', image_file)
         shutil.copy2(src_image, dst_image)
 
+def print_class_distribution(stats, title):
+    """
+    Print class distribution in a fixed order
+    """
+    print(f"\n{title}:")
+    for class_name in ['WF', 'MR', 'NC']:
+        count = stats.get(class_name, 0)
+        print(f"  {class_name}: {count}")
+
 def main():
     # Paths
     base_dir = 'data/yellow-sticky-traps-dataset-main'
@@ -103,7 +112,7 @@ def main():
     copy_files(train_files, base_dir, train_dir)
     copy_files(test_files, base_dir, test_dir)
     
-    # Calculate and print statistics
+    # Calculate statistics
     train_stats = defaultdict(int)
     test_stats = defaultdict(int)
     
@@ -120,13 +129,9 @@ def main():
     print(f"Train files: {len(train_files)}")
     print(f"Test files: {len(test_files)}")
     
-    print("\nClass Distribution in Train Set:")
-    for class_name, count in train_stats.items():
-        print(f"  {class_name}: {count}")
-        
-    print("\nClass Distribution in Test Set:")
-    for class_name, count in test_stats.items():
-        print(f"  {class_name}: {count}")
+    # Print class distributions in fixed order
+    print_class_distribution(train_stats, "Class Distribution in Train Set")
+    print_class_distribution(test_stats, "Class Distribution in Test Set")
     
     # Save split information
     split_info = {
@@ -141,6 +146,13 @@ def main():
     
     print(f"\nDataset has been split and saved to {output_dir}")
     print(f"Split information saved to {os.path.join(output_dir, 'split_info.json')}")
+    
+    # Remove original dataset directory
+    try:
+        shutil.rmtree(base_dir)
+        print(f"\nRemoved original dataset directory: {base_dir}")
+    except Exception as e:
+        print(f"\nWarning: Failed to remove original dataset directory: {e}")
 
 if __name__ == '__main__':
     main() 
