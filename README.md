@@ -30,10 +30,24 @@ Per-class performance:
 - MR: Precision 0.8850, Recall 0.8850, F1 0.8850
 - NC: Precision 0.7391, Recall 1.0000, F1 0.8499
 
+### Sample Results
+
+The repository includes sample detection results in the `inference_results/` directory:
+- 29 test images with detections
+- Each image has two associated files:
+  - `*_det.jpg`: Visualization with bounding boxes
+  - `*_det.json`: Detailed detection results including:
+    - Class ID and name
+    - Confidence score
+    - Bounding box coordinates
+    - Tile position
+- Evaluation metrics saved in `inference_results/eval_results.json`
+
 ## Features
 
 - Dataset preprocessing
 - Image tiling for small object detection
+- Dataset analysis and visualization
 - YOLOv8 model training and evaluation
 - Inference on full-size images
 - Visualization tools
@@ -63,6 +77,10 @@ yellow_sticky_traps_insects_detection/
 │       └── test/                         # Test tiles
 ├── final_model/          # Trained model
 │   └── best.pt           # Best model weights (50MB)
+├── inference_results/    # Detection results
+│   ├── *_det.jpg        # Visualization images
+│   ├── *_det.json       # Detection details
+│   └── eval_results.json # Evaluation metrics
 ├── requirements.txt       # Python dependencies
 ├── README.md             # Project overview
 └── GETTING_STARTED.md    # Detailed instructions

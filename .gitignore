@@ -43,6 +43,7 @@ ENV/
 data/
 output/
 # inference_results/
+dataset_statistics/
 eval_results.json
 visualized_tiles/
 *.pt
@@ -75,3 +76,4 @@ kaggle.json
 !final_model/best.pt
 !final_model/yolov8
 !inference_results/*.jpg
+!inference_results/*.json

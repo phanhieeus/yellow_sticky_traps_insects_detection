@@ -79,7 +79,78 @@ python src/data/tile_images.py
 python src/data/split_tiled_dataset.py
 ```
 
-## 4. Training
+## 4. Dataset Analysis
+
+You can analyze your dataset to understand its characteristics and distribution:
+
+```bash
+# Analyze original dataset
+python src/data/analyze_dataset.py --labels_dir data/data_for_train_test/train/labels
+
+# Analyze tiled dataset
+python src/data/analyze_dataset.py --labels_dir data/tiled_data/train/labels
+```
+
+### Analysis Output
+
+The script will generate a report in `dataset_statistics/` directory with the same structure as your input data. For example:
+- `dataset_statistics/data_for_train_test/train/` for original dataset
+- `dataset_statistics/tiled_data/train/` for tiled dataset
+
+Each analysis directory contains:
+1. `stats.json`: Detailed statistics including:
+   - Total number of images and objects
+   - Class distribution
+   - Objects per image statistics (mean, median, min, max)
+   - Object size statistics per class
+
+2. Visualization plots:
+   - `class_distribution.png`: Bar plot showing the distribution of classes
+   - `objects_per_image.png`: Histogram of objects per image
+   - `object_sizes.png`: Box plot of object sizes by class
+   - `class_co_occurrence.png`: Heatmap showing the co-occurrence matrix between classes
+
+This analysis helps you:
+- Understand the class imbalance in your dataset
+- Identify potential issues with object sizes
+- Plan appropriate data augmentation strategies
+- Make informed decisions about model architecture
+
+
+## 5. Visualizing Dataset
+
+You can use the visualization tool to check the quality of your dataset and annotations:
+
+```bash
+python src/utils/visualize_tile.py \
+    --tile_dir data/tiled_data/train/images \
+    --label_dir data/tiled_data/train/labels \
+    --output_dir visualized_tiles \
+    --num 10
+```
+
+### Visualization Parameters
+
+- `--tile_dir`: Directory containing tile images
+- `--label_dir`: Directory containing tile labels (YOLO format)
+- `--output_dir`: Directory to save visualized images
+- `--num`: Number of random tiles to visualize (default: 10)
+
+The tool will:
+1. Randomly select N tiles from the dataset
+2. Draw bounding boxes on each tile with different colors:
+   - WF (Whiteflies): Green
+   - MR (Macrolophus): Red
+   - NC (Nesidiocoris): Blue
+3. Save the visualized images in the output directory
+4. Create a new directory if the output directory already exists
+
+This is useful for:
+- Verifying the correctness of label conversion
+- Checking the quality of tiling
+- Inspecting the dataset before training
+
+## 6. Training
 
 Train the YOLOv8 model on the tiled dataset:
 
@@ -122,7 +193,7 @@ The training script will:
 - Save the best model as `runs/yolov8/best.pt`
 - Generate training logs and metrics in `runs/yolov8/`
 
-## 5. Inference
+## 7. Inference
 
 Run inference on images using the trained model. The script supports both single image and directory processing:
 
@@ -172,7 +243,7 @@ The inference script will:
      - Bounding box coordinates (absolute pixel coordinates)
      - Tile position
 
-## 6. Evaluation
+## 8. Evaluation
 
 Evaluate the model's performance on the test set:
 
