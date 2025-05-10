@@ -61,12 +61,13 @@ def copy_tiles(tiles, src_img_dir, src_label_dir, dst_img_dir, dst_label_dir):
 
 def print_stats(tiles, tile_stats, name):
     class_total = defaultdict(int)
+    class_names = {0: 'WF', 1: 'MR', 2: 'NC'}
     for tile in tiles:
         for k, v in tile_stats[tile].items():
             class_total[k] += v
     print(f"\n{name} set: {len(tiles)} tiles")
     for k in sorted(class_total):
-        print(f"  Class {k}: {class_total[k]} objects")
+        print(f"  {class_names[k]}: {class_total[k]} objects")
 
 def main():
     base_dir = 'data/tiled_data'
