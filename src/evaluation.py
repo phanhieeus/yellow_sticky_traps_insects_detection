@@ -68,6 +68,45 @@ def calculate_iou(box1, box2):
     iou = intersection / union if union > 0 else 0
     return iou
 
+def calculate_map(metrics_list: List[Dict], iou_threshold: float = 0.5) -> float:
+    """
+    Calculate mAP at specific IoU threshold
+    """
+    # Filter out ground truth entries and sort by confidence
+    detections = [m for m in metrics_list if not m['is_gt']]
+    if not detections:
+        return 0.0
+        
+    detections.sort(key=lambda x: x['confidence'], reverse=True)
+    
+    # Calculate precision and recall at each confidence threshold
+    precisions = []
+    recalls = []
+    tp = 0
+    fp = 0
+    total_gt = sum(1 for m in metrics_list if m['is_gt'])
+    
+    for detection in detections:
+        if detection['matched']:
+            tp += 1
+        else:
+            fp += 1
+
+        precision = tp / (tp + fp) if (tp + fp) > 0 else 0
+        recall = tp / total_gt if total_gt > 0 else 0
+        
+        precisions.append(precision)
+        recalls.append(recall)
+    
+    # Calculate AP using 11-point interpolation
+    ap = 0
+    for t in np.arange(0, 1.1, 0.1):
+        if len(recalls) > 0:
+            p = max([p for r, p in zip(recalls, precisions) if r >= t], default=0)
+            ap += p / 11
+    
+    return ap
+
 def evaluate_detections(gt_labels: List[Tuple], detections: List[Dict], image_path: str, iou_threshold: float = 0.5) -> Dict:
     """
     Đánh giá kết quả detection với ground truth
@@ -99,13 +138,18 @@ def evaluate_detections(gt_labels: List[Tuple], detections: List[Dict], image_pa
             'detection_count': 0,
             'true_positives': 0,
             'false_positives': 0,
-            'false_negatives': 0
+            'false_negatives': 0,
+            'metrics_list': []  # For mAP calculation
         })
     }
     
     # Đếm số lượng ground truth cho mỗi class
     for gt_class, _ in gt_boxes:
         metrics['per_class'][gt_class]['gt_count'] += 1
+        metrics['per_class'][gt_class]['metrics_list'].append({
+            'is_gt': True,
+            'matched': False
+        })
     
     # Đếm số lượng detections cho mỗi class
     for det_class, _, _ in det_boxes:
@@ -136,9 +180,19 @@ def evaluate_detections(gt_labels: List[Tuple], detections: List[Dict], image_pa
             matched_gt.add(best_gt_idx)
             metrics['true_positives'] += 1
             metrics['per_class'][det_class]['true_positives'] += 1
+            metrics['per_class'][det_class]['metrics_list'].append({
+                'is_gt': False,
+                'confidence': det_conf,
+                'matched': True
+            })
         else:
             metrics['false_positives'] += 1
             metrics['per_class'][det_class]['false_positives'] += 1
+            metrics['per_class'][det_class]['metrics_list'].append({
+                'is_gt': False,
+                'confidence': det_conf,
+                'matched': False
+            })
     
     # Tính false negatives
     metrics['false_negatives'] = len(gt_boxes) - len(matched_gt)
@@ -161,6 +215,9 @@ def evaluate_detections(gt_labels: List[Tuple], detections: List[Dict], image_pa
         class_metrics['precision'] = tp / (tp + fp) if (tp + fp) > 0 else 0
         class_metrics['recall'] = tp / (tp + fn) if (tp + fn) > 0 else 0
         class_metrics['f1'] = 2 * class_metrics['precision'] * class_metrics['recall'] / (class_metrics['precision'] + class_metrics['recall']) if (class_metrics['precision'] + class_metrics['recall']) > 0 else 0
+        
+        # Calculate mAP for this class
+        class_metrics['mAP50'] = calculate_map(class_metrics['metrics_list'], iou_threshold=0.5)
     
     return metrics
 
@@ -180,7 +237,8 @@ def evaluate_directory(gt_dir: str, pred_dir: str, image_dir: str, iou_threshold
             'detection_count': 0,
             'true_positives': 0,
             'false_positives': 0,
-            'false_negatives': 0
+            'false_negatives': 0,
+            'metrics_list': []  # For mAP calculation
         }),
         'per_image': {}
     }
@@ -225,6 +283,7 @@ def evaluate_directory(gt_dir: str, pred_dir: str, image_dir: str, iou_threshold
         for class_id, class_metrics in metrics['per_class'].items():
             for key in ['gt_count', 'detection_count', 'true_positives', 'false_positives', 'false_negatives']:
                 total_metrics['per_class'][class_id][key] += class_metrics[key]
+            total_metrics['per_class'][class_id]['metrics_list'].extend(class_metrics['metrics_list'])
         
         # Lưu metrics của từng ảnh
         total_metrics['per_image'][image_id] = metrics
@@ -244,6 +303,12 @@ def evaluate_directory(gt_dir: str, pred_dir: str, image_dir: str, iou_threshold
         class_metrics['precision'] = tp / (tp + fp) if (tp + fp) > 0 else 0
         class_metrics['recall'] = tp / (tp + fn) if (tp + fn) > 0 else 0
         class_metrics['f1'] = 2 * class_metrics['precision'] * class_metrics['recall'] / (class_metrics['precision'] + class_metrics['recall']) if (class_metrics['precision'] + class_metrics['recall']) > 0 else 0
+        
+        # Calculate mAP for this class
+        class_metrics['mAP50'] = calculate_map(class_metrics['metrics_list'], iou_threshold=0.5)
+    
+    # Calculate overall mAP50
+    total_metrics['mAP50'] = np.mean([class_metrics['mAP50'] for class_metrics in total_metrics['per_class'].values()])
 
     return total_metrics
 
@@ -273,6 +338,7 @@ def main():
     print(f"Precision: {metrics['precision']:.4f}")
     print(f"Recall: {metrics['recall']:.4f}")
     print(f"F1 Score: {metrics['f1']:.4f}")
+    print(f"mAP50: {metrics['mAP50']:.4f}")
     
     print("\nPer-Class Metrics:")
     class_names = {0: 'WF', 1: 'MR', 2: 'NC'}
@@ -286,6 +352,7 @@ def main():
         print(f"Precision: {class_metrics['precision']:.4f}")
         print(f"Recall: {class_metrics['recall']:.4f}")
         print(f"F1 Score: {class_metrics['f1']:.4f}")
+        print(f"mAP50: {class_metrics['mAP50']:.4f}")
 
 if __name__ == '__main__':
     main() 
