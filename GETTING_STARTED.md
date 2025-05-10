@@ -109,28 +109,28 @@ Run inference on images using the trained model. The script supports both single
 python src/inference.py \
     --model runs/yolov8/best.pt \
     --input path/to/image.jpg \
-    --conf 0.25 \
-    --patch-size 864
+    --conf 0.35 \
+    --output inference_results
 
 # For a directory of images
 python src/inference.py \
     --model runs/yolov8/best.pt \
     --input path/to/image/directory \
-    --conf 0.25 \
-    --patch-size 864
+    --conf 0.35 \
+    --output inference_results
 ```
 
 The inference script will:
 1. Process each image by splitting it into patches of size 864x864
-2. Run detection on each patch
+2. Run detection on each patch with confidence threshold of 0.35
 3. Convert patch coordinates to global image coordinates
-4. Apply Non-Maximum Suppression (NMS) to merge overlapping detections
+4. Apply Non-Maximum Suppression (NMS) with IoU threshold of 0.45 to merge overlapping detections
 5. Save results in `inference_results/`:
-   - Original image name: Visualization with bounding boxes
-   - `*_detections.json`: Detailed detection results including:
+   - `*_det.jpg`: Visualization with bounding boxes
+   - `*_det.json`: Detailed detection results including:
      - Class ID and name
      - Confidence score
-     - Bounding box coordinates (normalized)
+     - Bounding box coordinates (absolute pixel coordinates)
      - Tile position
 
 ## 6. Evaluation
@@ -141,15 +141,21 @@ Evaluate the model's performance on the test set:
 python src/evaluation.py \
     --gt data/data_for_train_test/test/labels \
     --pred inference_results \
-    --output eval_results.json \
-    --iou 0.5 \
-    --conf 0.001
+    --images data/data_for_train_test/test/images \
+    --output inference_results/eval_results.json
 ```
 
 The evaluation script will:
 - Compare detections with ground truth labels
-- Calculate mAP@0.5, AP per class, precision, recall, and F1-score
-- Save results in `eval_results.json`
+- Calculate metrics per class and overall:
+  - True Positives (TP)
+  - False Positives (FP)
+  - False Negatives (FN)
+  - Accuracy
+  - Precision
+  - Recall
+  - F1 Score
+- Save detailed results in `inference_results/eval_results.json`
 
 ## 7. Visualizing Results
 
@@ -185,8 +191,9 @@ yellow_sticky_traps_insects_detection/
 │       ├── train/
 │       └── test/
 ├── inference_results/
-│   ├── *.jpg
-│   └── *_detections.json
+│   ├── *_det.jpg
+│   ├── *_det.json
+│   └── eval_results.json
 ├── requirements.txt
 ├── README.md
 └── GETTING_STARTED.md
@@ -197,7 +204,7 @@ yellow_sticky_traps_insects_detection/
 - All data files (images, labels, results) are ignored by git
 - Model weights and training logs are saved in `runs/`
 - Inference results are automatically saved in `inference_results/`
-- Evaluation results are saved in `eval_results.json`
+- Evaluation results are saved in `inference_results/eval_results.json`
 - Use `dataset.yaml` for training configuration
 
 ## Troubleshooting
@@ -213,7 +220,7 @@ yellow_sticky_traps_insects_detection/
    - Process fewer images at once
 
 3. If detection quality is poor:
+   - Adjust confidence threshold (default: 0.35)
+   - Adjust IoU threshold for NMS (default: 0.45)
    - Increase training epochs
-   - Adjust confidence threshold
-   - Adjust IoU threshold for NMS
    - Use a larger model 

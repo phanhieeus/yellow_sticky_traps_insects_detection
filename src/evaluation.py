@@ -5,6 +5,8 @@ from pathlib import Path
 from collections import defaultdict
 from typing import List, Tuple, Dict
 import argparse
+import cv2
+from tqdm import tqdm
 
 def load_yolo_labels(label_path: str) -> List[Tuple[int, float, float, float, float]]:
     """
@@ -21,174 +23,275 @@ def load_yolo_labels(label_path: str) -> List[Tuple[int, float, float, float, fl
                 labels.append((int(class_id), x, y, w, h))
     return labels
 
-def iou(box1, box2):
-    # box: (x_center, y_center, w, h) normalized
-    x1, y1, w1, h1 = box1
-    x2, y2, w2, h2 = box2
-    # convert to xyxy
-    xa1 = x1 - w1/2
-    ya1 = y1 - h1/2
-    xa2 = x1 + w1/2
-    ya2 = y1 + h1/2
-    xb1 = x2 - w2/2
-    yb1 = y2 - h2/2
-    xb2 = x2 + w2/2
-    yb2 = y2 + h2/2
-    inter_x1 = max(xa1, xb1)
-    inter_y1 = max(ya1, yb1)
-    inter_x2 = min(xa2, xb2)
-    inter_y2 = min(ya2, yb2)
-    inter_w = max(0, inter_x2 - inter_x1)
-    inter_h = max(0, inter_y2 - inter_y1)
-    inter_area = inter_w * inter_h
-    area1 = (xa2 - xa1) * (ya2 - ya1)
-    area2 = (xb2 - xb1) * (yb2 - yb1)
-    union = area1 + area2 - inter_area
-    if union == 0:
-        return 0.0
-    return inter_area / union
-
-def match_detections(gt, preds, iou_thr=0.5):
+def load_detection_json(json_path: str) -> List[Dict]:
     """
-    Ghép nhãn dự đoán với ground truth, trả về TP, FP, FN cho từng class
-    gt: list (class_id, x, y, w, h)
-    preds: list (class_id, conf, x, y, w, h)
+    Đọc file JSON kết quả detection
     """
-    gt_by_class = defaultdict(list)
-    for g in gt:
-        gt_by_class[g[0]].append(g[1:])
-    pred_by_class = defaultdict(list)
-    for p in preds:
-        pred_by_class[p[0]].append(p[1:])
-    results = {}
-    for class_id in set(list(gt_by_class.keys()) + list(pred_by_class.keys())):
-        gt_boxes = gt_by_class[class_id]
-        pred_boxes = pred_by_class[class_id]
-        matched = set()
-        tp = 0
-        fp = 0
-        used_gt = set()
-        pred_boxes = sorted(pred_boxes, key=lambda x: -x[0])  # sort by conf desc
-        for pred in pred_boxes:
-            best_iou = 0
-            best_gt = -1
-            for i, gt_box in enumerate(gt_boxes):
-                if i in used_gt:
-                    continue
-                iou_val = iou(pred[1:], gt_box)
-                if iou_val > best_iou:
-                    best_iou = iou_val
-                    best_gt = i
-            if best_iou >= iou_thr and best_gt != -1:
-                tp += 1
-                used_gt.add(best_gt)
-            else:
-                fp += 1
-        fn = len(gt_boxes) - len(used_gt)
-        results[class_id] = {'tp': tp, 'fp': fp, 'fn': fn}
-    return results
+    if not os.path.exists(json_path):
+        return []
+    with open(json_path, 'r') as f:
+        data = json.load(f)
+        return data.get('detections', [])
 
-def compute_precision_recall_f1(tp, fp, fn):
-    precision = tp / (tp + fp) if (tp + fp) > 0 else 0
-    recall = tp / (tp + fn) if (tp + fn) > 0 else 0
-    f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0
-    return precision, recall, f1
-
-def compute_ap(recalls, precisions):
-    """Tính AP từ các điểm recall, precision (VOC 2007 11-point)"""
-    ap = 0.0
-    for t in np.arange(0, 1.1, 0.1):
-        p = [prec for r, prec in zip(recalls, precisions) if r >= t]
-        p = max(p) if p else 0
-        ap += p / 11.0
-    return ap
-
-def evaluate_folder(gt_dir, pred_dir, class_names, iou_thr=0.5, conf_thr=0.001):
+def convert_yolo_to_xyxy(box, img_width, img_height):
     """
-    Đánh giá toàn bộ folder test: tính mAP@0.5, precision, recall, f1 cho từng lớp
+    Chuyển đổi từ (x_center, y_center, w, h) normalized sang (x1, y1, x2, y2) absolute
     """
-    all_gts = defaultdict(list)
-    all_preds = defaultdict(list)
-    image_ids = []
-    for label_file in sorted(Path(gt_dir).glob('*.txt')):
-        img_id = label_file.stem
-        image_ids.append(img_id)
-        gt = load_yolo_labels(str(label_file))
-        all_gts[img_id] = gt
-        # Đọc predict
-        pred_file = Path(pred_dir) / f"{img_id}_det.json"
-        preds = []
-        if pred_file.exists():
-            with open(pred_file, 'r') as f:
-                for d in json.load(f):
-                    preds.append((d['class_id'], d['confidence'], *d['bbox']))
-        # Lọc theo conf threshold
-        preds = [p for p in preds if p[1] >= conf_thr]
-        all_preds[img_id] = preds
-    # Gom tất cả predict theo class để tính AP
-    aps = {}
-    prf1 = {}
-    for class_id, class_name in class_names.items():
-        # Tập hợp tất cả predict của class này trên toàn bộ ảnh
-        class_preds = []
-        class_gts = 0
-        for img_id in image_ids:
-            gt = [b for b in all_gts[img_id] if b[0] == class_id]
-            preds = [p for p in all_preds[img_id] if p[0] == class_id]
-            class_gts += len(gt)
-            for p in preds:
-                class_preds.append({'img_id': img_id, 'conf': p[1], 'bbox': p[2:]})
-        # Sort by conf desc
-        class_preds = sorted(class_preds, key=lambda x: -x['conf'])
-        tp = np.zeros(len(class_preds))
-        fp = np.zeros(len(class_preds))
-        used = defaultdict(set)
-        for i, pred in enumerate(class_preds):
-            gt_boxes = [b[1:] for b in all_gts[pred['img_id']] if b[0] == class_id]
-            best_iou = 0
-            best_gt = -1
-            for j, gt_box in enumerate(gt_boxes):
-                if j in used[pred['img_id']]:
-                    continue
-                iou_val = iou(pred['bbox'], gt_box)
-                if iou_val > best_iou:
-                    best_iou = iou_val
-                    best_gt = j
-            if best_iou >= iou_thr and best_gt != -1:
-                tp[i] = 1
-                used[pred['img_id']].add(best_gt)
-            else:
-                fp[i] = 1
-        # Precision-recall curve
-        tp_cum = np.cumsum(tp)
-        fp_cum = np.cumsum(fp)
-        recalls = tp_cum / class_gts if class_gts > 0 else np.zeros_like(tp_cum)
-        precisions = tp_cum / (tp_cum + fp_cum + 1e-16)
-        ap = compute_ap(recalls, precisions)
-        aps[class_name] = ap
-        # Tổng hợp TP, FP, FN để tính precision, recall, f1
-        n_tp = int(tp.sum())
-        n_fp = int(fp.sum())
-        n_fn = class_gts - n_tp
-        precision, recall, f1 = compute_precision_recall_f1(n_tp, n_fp, n_fn)
-        prf1[class_name] = {'precision': precision, 'recall': recall, 'f1': f1}
-    mAP = np.mean(list(aps.values()))
-    return {'mAP@0.5': mAP, 'AP_per_class': aps, 'PRF1_per_class': prf1}
+    x_center, y_center, w, h = box
+    x1 = (x_center - w/2) * img_width
+    y1 = (y_center - h/2) * img_height
+    x2 = (x_center + w/2) * img_width
+    y2 = (y_center + h/2) * img_height
+    return [x1, y1, x2, y2]
+
+def calculate_iou(box1, box2):
+    """
+    Tính IoU giữa 2 box dạng (x1, y1, x2, y2)
+    """
+    # Tính tọa độ giao nhau
+    x1 = max(box1[0], box2[0])
+    y1 = max(box1[1], box2[1])
+    x2 = min(box1[2], box2[2])
+    y2 = min(box1[3], box2[3])
+
+    # Tính diện tích giao nhau
+    intersection = max(0, x2 - x1) * max(0, y2 - y1)
+
+    # Tính diện tích của mỗi box
+    box1_area = (box1[2] - box1[0]) * (box1[3] - box1[1])
+    box2_area = (box2[2] - box2[0]) * (box2[3] - box2[1])
+
+    # Tính diện tích hợp
+    union = box1_area + box2_area - intersection
+
+    # Tính IoU
+    iou = intersection / union if union > 0 else 0
+    return iou
+
+def evaluate_detections(gt_labels: List[Tuple], detections: List[Dict], image_path: str, iou_threshold: float = 0.5) -> Dict:
+    """
+    Đánh giá kết quả detection với ground truth
+    """
+    # Đọc kích thước ảnh
+    img = cv2.imread(image_path)
+    if img is None:
+        raise ValueError(f"Cannot read image: {image_path}")
+    img_height, img_width = img.shape[:2]
+    
+    # Chuyển đổi ground truth sang định dạng (class_id, [x1, y1, x2, y2])
+    gt_boxes = [(label[0], convert_yolo_to_xyxy(label[1:], img_width, img_height)) for label in gt_labels]
+    
+    # Chuyển đổi detections sang định dạng (class_id, confidence, [x1, y1, x2, y2])
+    det_boxes = [(det['class'], det['confidence'], det['bbox']) for det in detections]
+    
+    # Sắp xếp detections theo confidence giảm dần
+    det_boxes.sort(key=lambda x: x[1], reverse=True)
+    
+    # Khởi tạo các biến đếm
+    metrics = {
+        'total_gt': len(gt_boxes),
+        'total_detections': len(det_boxes),
+        'true_positives': 0,
+        'false_positives': 0,
+        'false_negatives': 0,
+        'per_class': defaultdict(lambda: {
+            'gt_count': 0,
+            'detection_count': 0,
+            'true_positives': 0,
+            'false_positives': 0,
+            'false_negatives': 0
+        })
+    }
+    
+    # Đếm số lượng ground truth cho mỗi class
+    for gt_class, _ in gt_boxes:
+        metrics['per_class'][gt_class]['gt_count'] += 1
+    
+    # Đếm số lượng detections cho mỗi class
+    for det_class, _, _ in det_boxes:
+        metrics['per_class'][det_class]['detection_count'] += 1
+    
+    # Đánh dấu các ground truth đã được match
+    matched_gt = set()
+    
+    # Match detections với ground truth
+    for det_class, det_conf, det_box in det_boxes:
+        best_iou = 0
+        best_gt_idx = -1
+        
+        # Tìm ground truth có IoU cao nhất
+        for gt_idx, (gt_class, gt_box) in enumerate(gt_boxes):
+            if gt_idx in matched_gt:
+                continue
+            if gt_class != det_class:
+                continue
+                
+            iou = calculate_iou(det_box, gt_box)
+            if iou > best_iou:
+                best_iou = iou
+                best_gt_idx = gt_idx
+        
+        # Nếu IoU > threshold, đây là true positive
+        if best_iou >= iou_threshold and best_gt_idx != -1:
+            matched_gt.add(best_gt_idx)
+            metrics['true_positives'] += 1
+            metrics['per_class'][det_class]['true_positives'] += 1
+        else:
+            metrics['false_positives'] += 1
+            metrics['per_class'][det_class]['false_positives'] += 1
+    
+    # Tính false negatives
+    metrics['false_negatives'] = len(gt_boxes) - len(matched_gt)
+    for gt_class, _ in gt_boxes:
+        if gt_class not in matched_gt:
+            metrics['per_class'][gt_class]['false_negatives'] += 1
+    
+    # Tính các metrics
+    metrics['accuracy'] = metrics['true_positives'] / (metrics['total_gt'] + metrics['total_detections']) if (metrics['total_gt'] + metrics['total_detections']) > 0 else 0
+    metrics['precision'] = metrics['true_positives'] / (metrics['true_positives'] + metrics['false_positives']) if (metrics['true_positives'] + metrics['false_positives']) > 0 else 0
+    metrics['recall'] = metrics['true_positives'] / (metrics['true_positives'] + metrics['false_negatives']) if (metrics['true_positives'] + metrics['false_negatives']) > 0 else 0
+    metrics['f1'] = 2 * metrics['precision'] * metrics['recall'] / (metrics['precision'] + metrics['recall']) if (metrics['precision'] + metrics['recall']) > 0 else 0
+    
+    # Tính metrics cho từng class
+    for class_id in metrics['per_class']:
+        class_metrics = metrics['per_class'][class_id]
+        tp = class_metrics['true_positives']
+        fp = class_metrics['false_positives']
+        fn = class_metrics['false_negatives']
+        
+        class_metrics['accuracy'] = tp / (class_metrics['gt_count'] + class_metrics['detection_count']) if (class_metrics['gt_count'] + class_metrics['detection_count']) > 0 else 0
+        class_metrics['precision'] = tp / (tp + fp) if (tp + fp) > 0 else 0
+        class_metrics['recall'] = tp / (tp + fn) if (tp + fn) > 0 else 0
+        class_metrics['f1'] = 2 * class_metrics['precision'] * class_metrics['recall'] / (class_metrics['precision'] + class_metrics['recall']) if (class_metrics['precision'] + class_metrics['recall']) > 0 else 0
+    
+    return metrics
+
+def evaluate_directory(gt_dir: str, pred_dir: str, image_dir: str, iou_threshold: float = 0.5) -> Dict:
+    """
+    Đánh giá kết quả detection cho toàn bộ thư mục
+    """
+    # Khởi tạo metrics tổng hợp
+    total_metrics = {
+        'total_gt': 0,
+        'total_detections': 0,
+        'true_positives': 0,
+        'false_positives': 0,
+        'false_negatives': 0,
+        'per_class': defaultdict(lambda: {
+            'gt_count': 0,
+            'detection_count': 0,
+            'true_positives': 0,
+            'false_positives': 0,
+            'false_negatives': 0
+        }),
+        'per_image': {}
+    }
+
+    # Lấy danh sách các file
+    gt_files = sorted(Path(gt_dir).glob('*.txt'))
+    if not gt_files:
+        raise ValueError(f"No label files found in {gt_dir}")
+
+    print(f"Evaluating {len(gt_files)} images...")
+    for gt_file in tqdm(gt_files):
+        # Lấy tên file không có phần mở rộng
+        image_id = gt_file.stem
+        
+        # Đường dẫn đến ảnh và kết quả detection
+        image_path = Path(image_dir) / f"{image_id}.jpg"
+        pred_path = Path(pred_dir) / f"{image_id}_det.json"
+        
+        if not image_path.exists():
+            print(f"Warning: Image not found: {image_path}")
+            continue
+            
+        if not pred_path.exists():
+            print(f"Warning: Detection result not found: {pred_path}")
+            continue
+
+        # Đọc ground truth và predictions
+        gt_labels = load_yolo_labels(str(gt_file))
+        detections = load_detection_json(str(pred_path))
+        
+        # Đánh giá cho ảnh này
+        metrics = evaluate_detections(gt_labels, detections, str(image_path), iou_threshold)
+        
+        # Cập nhật metrics tổng hợp
+        total_metrics['total_gt'] += metrics['total_gt']
+        total_metrics['total_detections'] += metrics['total_detections']
+        total_metrics['true_positives'] += metrics['true_positives']
+        total_metrics['false_positives'] += metrics['false_positives']
+        total_metrics['false_negatives'] += metrics['false_negatives']
+        
+        # Cập nhật metrics theo class
+        for class_id, class_metrics in metrics['per_class'].items():
+            for key in ['gt_count', 'detection_count', 'true_positives', 'false_positives', 'false_negatives']:
+                total_metrics['per_class'][class_id][key] += class_metrics[key]
+        
+        # Lưu metrics của từng ảnh
+        total_metrics['per_image'][image_id] = metrics
+
+    # Tính các metrics tổng hợp
+    total_metrics['accuracy'] = total_metrics['true_positives'] / (total_metrics['total_gt'] + total_metrics['total_detections']) if (total_metrics['total_gt'] + total_metrics['total_detections']) > 0 else 0
+    total_metrics['precision'] = total_metrics['true_positives'] / (total_metrics['true_positives'] + total_metrics['false_positives']) if (total_metrics['true_positives'] + total_metrics['false_positives']) > 0 else 0
+    total_metrics['recall'] = total_metrics['true_positives'] / (total_metrics['true_positives'] + total_metrics['false_negatives']) if (total_metrics['true_positives'] + total_metrics['false_negatives']) > 0 else 0
+    total_metrics['f1'] = 2 * total_metrics['precision'] * total_metrics['recall'] / (total_metrics['precision'] + total_metrics['recall']) if (total_metrics['precision'] + total_metrics['recall']) > 0 else 0
+
+    # Tính metrics cho từng class
+    for class_id in total_metrics['per_class']:
+        class_metrics = total_metrics['per_class'][class_id]
+        tp = class_metrics['true_positives']
+        fp = class_metrics['false_positives']
+        fn = class_metrics['false_negatives']
+        
+        class_metrics['accuracy'] = tp / (class_metrics['gt_count'] + class_metrics['detection_count']) if (class_metrics['gt_count'] + class_metrics['detection_count']) > 0 else 0
+        class_metrics['precision'] = tp / (tp + fp) if (tp + fp) > 0 else 0
+        class_metrics['recall'] = tp / (tp + fn) if (tp + fn) > 0 else 0
+        class_metrics['f1'] = 2 * class_metrics['precision'] * class_metrics['recall'] / (class_metrics['precision'] + class_metrics['recall']) if (class_metrics['precision'] + class_metrics['recall']) > 0 else 0
+
+    return total_metrics
 
 def main():
-    parser = argparse.ArgumentParser(description='Evaluate object detection results (YOLO format)')
-    parser.add_argument('--gt', type=str, required=True, help='Path to ground truth label folder (YOLO .txt)')
-    parser.add_argument('--pred', type=str, required=True, help='Path to detection results folder (json)')
+    parser = argparse.ArgumentParser(description='Evaluate object detection results')
+    parser.add_argument('--gt', type=str, required=True, help='Path to ground truth labels directory')
+    parser.add_argument('--pred', type=str, required=True, help='Path to detection results directory')
+    parser.add_argument('--images', type=str, required=True, help='Path to images directory')
     parser.add_argument('--output', type=str, default='eval_results.json', help='Output JSON file')
     parser.add_argument('--iou', type=float, default=0.5, help='IoU threshold')
-    parser.add_argument('--conf', type=float, default=0.001, help='Confidence threshold for predictions')
     args = parser.parse_args()
-    # Định nghĩa class_names
-    class_names = {0: 'WF', 1: 'MR', 2: 'NC'}
-    results = evaluate_folder(args.gt, args.pred, class_names, iou_thr=args.iou, conf_thr=args.conf)
+    
+    # Đánh giá toàn bộ thư mục
+    metrics = evaluate_directory(args.gt, args.pred, args.images, args.iou)
+    
+    # Lưu kết quả
     with open(args.output, 'w') as f:
-        json.dump(results, f, indent=2)
-    print(json.dumps(results, indent=2))
+        json.dump(metrics, f, indent=2)
+    
+    # In kết quả tổng hợp
+    print("\nOverall Metrics:")
+    print(f"Total Ground Truth Objects: {metrics['total_gt']}")
+    print(f"Total Detected Objects: {metrics['total_detections']}")
+    print(f"True Positives: {metrics['true_positives']}")
+    print(f"False Positives: {metrics['false_positives']}")
+    print(f"False Negatives: {metrics['false_negatives']}")
+    print(f"Accuracy: {metrics['accuracy']:.4f}")
+    print(f"Precision: {metrics['precision']:.4f}")
+    print(f"Recall: {metrics['recall']:.4f}")
+    print(f"F1 Score: {metrics['f1']:.4f}")
+    
+    print("\nPer-Class Metrics:")
+    class_names = {0: 'WF', 1: 'MR', 2: 'NC'}
+    for class_id, class_metrics in metrics['per_class'].items():
+        print(f"\nClass {class_names.get(class_id, class_id)}:")
+        print(f"Ground Truth Count: {class_metrics['gt_count']}")
+        print(f"Detection Count: {class_metrics['detection_count']}")
+        print(f"True Positives: {class_metrics['true_positives']}")
+        print(f"False Positives: {class_metrics['false_positives']}")
+        print(f"False Negatives: {class_metrics['false_negatives']}")
+        print(f"Accuracy: {class_metrics['accuracy']:.4f}")
+        print(f"Precision: {class_metrics['precision']:.4f}")
+        print(f"Recall: {class_metrics['recall']:.4f}")
+        print(f"F1 Score: {class_metrics['f1']:.4f}")
 
 if __name__ == '__main__':
     main() 

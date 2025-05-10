@@ -1,372 +1,244 @@
 import cv2
 import numpy as np
 from pathlib import Path
-from typing import List, Tuple, Dict, Optional, Union
 from ultralytics import YOLO
-import torch
-from dataclasses import dataclass
-import json
 import argparse
-import logging
+import os
+import json
 from tqdm import tqdm
-import shutil
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+PATCH_SIZE = 864
 
-@dataclass
-class Detection:
-    """Class for storing detection results."""
-    class_id: int
-    confidence: float
-    bbox: Tuple[float, float, float, float]  # x_center, y_center, width, height
-    tile_pos: Tuple[int, int]  # (x, y) position of the tile
+class_names = {
+    0: "WF",  # Whiteflies
+    1: "MR",  # Macrolophus
+    2: "NC"   # Nesidiocoris
+}
 
-class InsectDetector:
-    """Class for handling insect detection using YOLO model."""
+colors = {
+    0: (0, 255, 0),    # Green for WF (Whiteflies)
+    1: (255, 0, 0),    # Red for MR (Macrolophus)
+    2: (0, 0, 255)     # Blue for NC (Nesidiocoris)
+}
+
+def create_patches(image, patch_size=PATCH_SIZE):
+    h, w = image.shape[:2]
+    patches = []
+    positions = []
+    for y in range(0, h, patch_size):
+        for x in range(0, w, patch_size):
+            patch = image[y:y+patch_size, x:x+patch_size]
+            patches.append(patch)
+            positions.append((x, y))
+    return patches, positions
+
+def apply_nms(boxes, scores, iou_threshold=0.45):
+    """
+    Apply Non-Maximum Suppression to remove overlapping boxes
+    boxes: list of [x1, y1, x2, y2]
+    scores: list of confidence scores
+    iou_threshold: IoU threshold for NMS
+    """
+    if len(boxes) == 0:
+        return []
+
+    # Convert to numpy arrays
+    boxes = np.array(boxes)
+    scores = np.array(scores)
+
+    # Get coordinates
+    x1 = boxes[:, 0]
+    y1 = boxes[:, 1]
+    x2 = boxes[:, 2]
+    y2 = boxes[:, 3]
+
+    # Calculate areas
+    areas = (x2 - x1 + 1) * (y2 - y1 + 1)
+
+    # Sort by confidence score
+    indices = np.argsort(scores)[::-1]
+
+    keep = []
+    while indices.size > 0:
+        # Pick the box with highest confidence
+        i = indices[0]
+        keep.append(i)
+
+        # Calculate IoU with remaining boxes
+        xx1 = np.maximum(x1[i], x1[indices[1:]])
+        yy1 = np.maximum(y1[i], y1[indices[1:]])
+        xx2 = np.minimum(x2[i], x2[indices[1:]])
+        yy2 = np.minimum(y2[i], y2[indices[1:]])
+
+        w = np.maximum(0, xx2 - xx1 + 1)
+        h = np.maximum(0, yy2 - yy1 + 1)
+        intersection = w * h
+
+        # Calculate IoU
+        iou = intersection / (areas[i] + areas[indices[1:]] - intersection)
+
+        # Remove boxes with IoU > threshold
+        indices = indices[1:][iou <= iou_threshold]
+
+    return keep
+
+def draw_detections(image, detections, positions, patch_size=PATCH_SIZE):
+    h_img, w_img = image.shape[:2]
     
-    def __init__(self, model_path: str, conf_threshold: float = 0.25, patch_size: int = 864):
-        """
-        Initialize the detector.
-        
-        Args:
-            model_path: Path to the YOLO model weights
-            conf_threshold: Confidence threshold for detections
-            patch_size: Size of image patches for processing
-        """
-        self.model = YOLO(model_path)
-        self.conf_threshold = conf_threshold
-        self.patch_size = patch_size
-        self.class_names = {
-            0: "WF",  # Whiteflies
-            1: "MR",  # Macrolophus
-            2: "NC"   # Nesidiocoris
-        }
+    # Collect all boxes and scores
+    all_boxes = []
+    all_scores = []
+    all_classes = []
     
-    def create_patches(self, image: np.ndarray) -> Tuple[List[np.ndarray], List[Tuple[int, int]]]:
-        """
-        Split image into patches of size patch_size x patch_size.
-        
-        Args:
-            image: Input image
-            
-        Returns:
-            List of patches and their positions
-        """
-        height, width = image.shape[:2]
-        patches = []
-        positions = []
-        
-        for y in range(0, height, self.patch_size):
-            for x in range(0, width, self.patch_size):
-                # Calculate patch dimensions
-                patch_height = min(self.patch_size, height - y)
-                patch_width = min(self.patch_size, width - x)
-                
-                # Extract patch
-                patch = image[y:y+patch_height, x:x+patch_width]
-                patches.append(patch)
-                positions.append((x, y))
-                
-        return patches, positions
-    
-    def merge_patches(self, image: np.ndarray, patches: List[np.ndarray], positions: List[Tuple[int, int]]) -> np.ndarray:
-        """
-        Merge processed patches back into original image.
-        
-        Args:
-            image: Original image
-            patches: List of processed patches
-            positions: List of patch positions
-            
-        Returns:
-            Merged image
-        """
-        merged = image.copy()
-        for patch, (x, y) in zip(patches, positions):
-            h, w = patch.shape[:2]
-            merged[y:y+h, x:x+w] = patch
-        return merged
-    
-    def convert_to_global_coords(self, detections: List[Detection], tile_pos: Tuple[int, int], 
-                               patch_shape: Tuple[int, int], image_shape: Tuple[int, int]) -> List[Detection]:
-        """
-        Convert patch-relative coordinates to global image coordinates.
-        
-        Args:
-            detections: List of detections in patch coordinates
-            tile_pos: Position of the patch in the original image
-            patch_shape: Shape of the patch
-            image_shape: Shape of the original image
-            
-        Returns:
-            List of detections in global coordinates
-        """
-        global_detections = []
-        tile_x, tile_y = tile_pos
-        patch_h, patch_w = patch_shape
-        img_h, img_w = image_shape
-        
-        for det in detections:
-            x_center, y_center, width, height = det.bbox
-            
-            # Convert to absolute coordinates in patch
-            abs_x = x_center * patch_w
-            abs_y = y_center * patch_h
+    for det, (x0, y0) in zip(detections, positions):
+        for box in det.boxes:
+            x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
+            conf = float(box.conf[0])
+            cls = int(box.cls[0])
             
             # Convert to global coordinates
-            global_x = (abs_x + tile_x) / img_w
-            global_y = (abs_y + tile_y) / img_h
+            x1g = int(x1 + x0)
+            y1g = int(y1 + y0)
+            x2g = int(x2 + x0)
+            y2g = int(y2 + y0)
             
-            global_detections.append(Detection(
-                class_id=det.class_id,
-                confidence=det.confidence,
-                bbox=(global_x, global_y, width, height),
-                tile_pos=tile_pos
-            ))
-            
-        return global_detections
+            all_boxes.append([x1g, y1g, x2g, y2g])
+            all_scores.append(conf)
+            all_classes.append(cls)
     
-    def non_max_suppression(self, detections: List[Detection], iou_threshold: float = 0.5) -> List[Detection]:
-        """
-        Apply Non-Maximum Suppression to remove overlapping detections.
+    # Apply NMS
+    if all_boxes:
+        keep_indices = apply_nms(all_boxes, all_scores)
         
-        Args:
-            detections: List of detections
-            iou_threshold: IoU threshold for suppression
+        # Draw only the boxes that passed NMS
+        for idx in keep_indices:
+            x1g, y1g, x2g, y2g = all_boxes[idx]
+            conf = all_scores[idx]
+            cls = all_classes[idx]
             
-        Returns:
-            Filtered list of detections
-        """
-        if not detections:
-            return []
-            
-        # Sort by confidence
-        detections = sorted(detections, key=lambda x: x.confidence, reverse=True)
-        keep = []
-        
-        while detections:
-            current = detections.pop(0)
-            keep.append(current)
-            
-            # Calculate IoU with remaining detections
-            ious = []
-            for det in detections:
-                if det.class_id != current.class_id:
-                    ious.append(0)
-                    continue
-                    
-                # Convert to absolute coordinates
-                x1_curr = (current.bbox[0] - current.bbox[2]/2)
-                y1_curr = (current.bbox[1] - current.bbox[3]/2)
-                x2_curr = (current.bbox[0] + current.bbox[2]/2)
-                y2_curr = (current.bbox[1] + current.bbox[3]/2)
-                
-                x1_det = (det.bbox[0] - det.bbox[2]/2)
-                y1_det = (det.bbox[1] - det.bbox[3]/2)
-                x2_det = (det.bbox[0] + det.bbox[2]/2)
-                y2_det = (det.bbox[1] + det.bbox[3]/2)
-                
-                # Calculate intersection
-                x1 = max(x1_curr, x1_det)
-                y1 = max(y1_curr, y1_det)
-                x2 = min(x2_curr, x2_det)
-                y2 = min(y2_curr, y2_det)
-                
-                if x2 < x1 or y2 < y1:
-                    ious.append(0)
-                    continue
-                    
-                intersection = (x2 - x1) * (y2 - y1)
-                area_curr = (x2_curr - x1_curr) * (y2_curr - y1_curr)
-                area_det = (x2_det - x1_det) * (y2_det - y1_det)
-                union = area_curr + area_det - intersection
-                
-                ious.append(intersection / union if union > 0 else 0)
-            
-            # Remove detections with high IoU
-            detections = [det for det, iou in zip(detections, ious) if iou < iou_threshold]
-            
-        return keep
+            color = colors.get(cls, (255, 255, 255))
+            cv2.rectangle(image, (x1g, y1g), (x2g, y2g), color, 2)
+            label = f"{class_names[cls]} {conf:.2f}"
+            cv2.putText(image, label, (x1g, y1g-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
     
-    def detect(self, image: np.ndarray) -> List[Detection]:
-        """
-        Run detection on a single image using patch-based processing.
-        
-        Args:
-            image: Input image as numpy array
-            
-        Returns:
-            List of Detection objects
-        """
-        # Create patches
-        patches, positions = self.create_patches(image)
-        all_detections = []
-        
-        # Process each patch
-        for patch, pos in zip(patches, positions):
-            results = self.model(patch, conf=self.conf_threshold)[0]
-            patch_detections = []
-            
-            for box in results.boxes:
-                x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
-                conf = float(box.conf[0])
-                cls = int(box.cls[0])
-                
-                # Convert to normalized center coordinates
-                patch_h, patch_w = patch.shape[:2]
-                x_center = (x1 + x2) / (2 * patch_w)
-                y_center = (y1 + y2) / (2 * patch_h)
-                width = (x2 - x1) / patch_w
-                height = (y2 - y1) / patch_h
-                
-                patch_detections.append(Detection(
-                    class_id=cls,
-                    confidence=conf,
-                    bbox=(x_center, y_center, width, height),
-                    tile_pos=pos
-                ))
-            
-            # Convert to global coordinates
-            global_detections = self.convert_to_global_coords(
-                patch_detections, pos, patch.shape[:2], image.shape[:2]
-            )
-            all_detections.extend(global_detections)
-        
-        # Apply NMS
-        return self.non_max_suppression(all_detections)
-    
-    def detect_batch(self, image_paths: List[str]) -> Dict[str, List[Detection]]:
-        """
-        Run detection on multiple images.
-        
-        Args:
-            image_paths: List of paths to images
-            
-        Returns:
-            Dictionary mapping image paths to their detections
-        """
-        results = {}
-        for img_path in tqdm(image_paths, desc="Processing images"):
-            try:
-                image = cv2.imread(img_path)
-                if image is None:
-                    logger.warning(f"Could not read image: {img_path}")
-                    continue
-                    
-                detections = self.detect(image)
-                results[img_path] = detections
-                
-            except Exception as e:
-                logger.error(f"Error processing {img_path}: {str(e)}")
-                
-        return results
+    return image
 
-def visualize_detections(
-    image: np.ndarray,
-    detections: List[Detection],
-    class_names: Dict[int, str],
-    output_path: Optional[str] = None,
-    show_labels: bool = True,
-    line_thickness: int = 2
-) -> np.ndarray:
+def save_detections_to_json(detections, positions, image_path, output_dir):
     """
-    Visualize detections on image.
-    
-    Args:
-        image: Input image
-        detections: List of Detection objects
-        class_names: Dictionary mapping class IDs to names
-        output_path: Path to save visualization (optional)
-        show_labels: Whether to show class labels and confidence scores
-        line_thickness: Thickness of bounding box lines
-        
-    Returns:
-        Image with visualizations
+    Save detection results to a JSON file
     """
-    # Create copy of image
-    vis_image = image.copy()
-    
-    # Define colors for each class
-    colors = {
-        0: (0, 255, 0),    # Green for WF (Whiteflies)
-        1: (255, 0, 0),    # Red for MR (Macrolophus)
-        2: (0, 0, 255)     # Blue for NC (Nesidiocoris)
+    results = {
+        "image_path": image_path,
+        "detections": []
     }
     
-    # Draw each detection
-    for det in detections:
-        x_center, y_center, width, height = det.bbox
-        x1 = int((x_center - width/2) * image.shape[1])
-        y1 = int((y_center - height/2) * image.shape[0])
-        x2 = int((x_center + width/2) * image.shape[1])
-        y2 = int((y_center + height/2) * image.shape[0])
-        
-        # Draw bounding box
-        color = colors.get(det.class_id, (255, 255, 255))
-        cv2.rectangle(vis_image, (x1, y1), (x2, y2), color, line_thickness)
-        
-        if show_labels:
-            # Draw label
-            label = f"{class_names[det.class_id]} {det.confidence:.2f}"
-            (label_w, label_h), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, line_thickness)
-            cv2.rectangle(vis_image, (x1, y1-label_h-10), (x1+label_w, y1), color, -1)
-            cv2.putText(vis_image, label, (x1, y1-5),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), line_thickness)
+    # Collect all boxes and scores
+    all_boxes = []
+    all_scores = []
+    all_classes = []
     
-    # Save visualization if output path is provided
-    if output_path:
-        cv2.imwrite(output_path, vis_image)
+    for det, (x0, y0) in zip(detections, positions):
+        for box in det.boxes:
+            x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
+            conf = float(box.conf[0])
+            cls = int(box.cls[0])
+            
+            # Convert to global coordinates
+            x1g = int(x1 + x0)
+            y1g = int(y1 + y0)
+            x2g = int(x2 + x0)
+            y2g = int(y2 + y0)
+            
+            all_boxes.append([x1g, y1g, x2g, y2g])
+            all_scores.append(conf)
+            all_classes.append(cls)
     
-    return vis_image
+    # Apply NMS
+    if all_boxes:
+        keep_indices = apply_nms(all_boxes, all_scores)
+        
+        # Save only the boxes that passed NMS
+        for idx in keep_indices:
+            x1g, y1g, x2g, y2g = all_boxes[idx]
+            conf = all_scores[idx]
+            cls = all_classes[idx]
+            
+            detection = {
+                "bbox": [x1g, y1g, x2g, y2g],
+                "confidence": float(conf),
+                "class": int(cls),
+                "class_name": class_names[cls]
+            }
+            results["detections"].append(detection)
+    
+    # Save to JSON file
+    os.makedirs(output_dir, exist_ok=True)
+    json_path = os.path.join(output_dir, f"{Path(image_path).stem}_det.json")
+    with open(json_path, 'w') as f:
+        json.dump(results, f, indent=2)
+    
+    return json_path
+
+def process_image(image_path, model, output_dir, conf_threshold=0.35):
+    """
+    Xử lý một ảnh và lưu kết quả
+    """
+    # Đọc ảnh
+    image = cv2.imread(str(image_path))
+    if image is None:
+        print(f"Cannot read image: {image_path}")
+        return None
+
+    # Cắt patch
+    patches, positions = create_patches(image, PATCH_SIZE)
+
+    # Detect từng patch với confidence threshold
+    detections = [model(patch, conf=conf_threshold)[0] for patch in patches]
+
+    # Vẽ kết quả lên ảnh gốc
+    vis_image = image.copy()
+    vis_image = draw_detections(vis_image, detections, positions, PATCH_SIZE)
+
+    # Lưu kết quả ảnh
+    os.makedirs(output_dir, exist_ok=True)
+    out_path = os.path.join(output_dir, f"{image_path.stem}_det.jpg")
+    cv2.imwrite(out_path, vis_image)
+
+    # Lưu kết quả JSON
+    json_path = save_detections_to_json(detections, positions, str(image_path), output_dir)
+    
+    return json_path
 
 def main():
-    """Main function to run inference from command line."""
-    parser = argparse.ArgumentParser(description="Run insect detection on images")
-    parser.add_argument("--model", type=str, required=True, help="Path to YOLO model weights")
-    parser.add_argument("--input", type=str, required=True, help="Path to input image or directory")
-    parser.add_argument("--conf", type=float, default=0.25, help="Confidence threshold")
-    parser.add_argument("--patch-size", type=int, default=864, help="Size of image patches")
+    parser = argparse.ArgumentParser(description="Inference on test images with patching.")
+    parser.add_argument('--model', type=str, required=True, help='Path to YOLO model weights')
+    parser.add_argument('--input', type=str, required=True, help='Path to input image or directory')
+    parser.add_argument('--output', type=str, default='inference_results', help='Output directory')
+    parser.add_argument('--conf', type=float, default=0.35, help='Confidence threshold')
     args = parser.parse_args()
-    
-    # Create output directory
-    output_dir = Path("inference_results")
-    output_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Initialize detector
-    detector = InsectDetector(args.model, args.conf, args.patch_size)
-    
-    # Process input
+
+    # Load model
+    model = YOLO(args.model)
+
+    # Xử lý input là file hoặc thư mục
     input_path = Path(args.input)
     if input_path.is_file():
-        image_paths = [str(input_path)]
+        # Xử lý một ảnh
+        json_path = process_image(input_path, model, args.output, args.conf)
+        if json_path:
+            print(f"Result saved to {json_path}")
     else:
-        image_paths = [str(p) for p in input_path.glob("*.jpg")] + [str(p) for p in input_path.glob("*.png")]
-    
-    # Run detection
-    results = detector.detect_batch(image_paths)
-    
-    # Visualize and save results
-    for img_path, detections in results.items():
-        image = cv2.imread(img_path)
-        output_path = str(output_dir / Path(img_path).name)
-        visualize_detections(image, detections, detector.class_names, output_path)
-        
-        # Save detection results as JSON
-        json_path = str(output_dir / Path(img_path).stem) + "_detections.json"
-        detections_dict = [
-            {
-                "class_id": det.class_id,
-                "class_name": detector.class_names[det.class_id],
-                "confidence": det.confidence,
-                "bbox": det.bbox,
-                "tile_pos": det.tile_pos
-            }
-            for det in detections
-        ]
-        with open(json_path, "w") as f:
-            json.dump(detections_dict, f, indent=2)
+        # Xử lý toàn bộ thư mục
+        image_files = list(input_path.glob('*.jpg')) + list(input_path.glob('*.jpeg')) + list(input_path.glob('*.png'))
+        if not image_files:
+            print(f"No image files found in {args.input}")
+            return
+
+        print(f"Processing {len(image_files)} images...")
+        for image_path in tqdm(image_files):
+            json_path = process_image(image_path, model, args.output, args.conf)
+            if json_path:
+                print(f"Processed {image_path.name} -> {json_path}")
 
 if __name__ == "__main__":
     main() 
