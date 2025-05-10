@@ -102,27 +102,36 @@ The training script will:
 
 ## 5. Inference
 
-Run inference on the test set using the trained model:
+Run inference on images using the trained model. The script supports both single image and directory processing:
 
 ```bash
+# For a single image
 python src/inference.py \
     --model runs/yolov8/best.pt \
-    --input data/data_for_train_test/test/images \
-    --output inference_results \
-    --tile_size 864 \
-    --overlap 0.2 \
+    --input path/to/image.jpg \
     --conf 0.25 \
-    --iou 0.5 \
-    --device 0
+    --patch-size 864
+
+# For a directory of images
+python src/inference.py \
+    --model runs/yolov8/best.pt \
+    --input path/to/image/directory \
+    --conf 0.25 \
+    --patch-size 864
 ```
 
-This will:
-- Process each test image by splitting it into tiles
-- Run detection on each tile
-- Merge results and apply NMS
-- Save results in `inference_results/`:
-  - `*_det.jpg`: Images with bounding boxes
-  - `*_det.json`: Detection results in JSON format
+The inference script will:
+1. Process each image by splitting it into patches of size 864x864
+2. Run detection on each patch
+3. Convert patch coordinates to global image coordinates
+4. Apply Non-Maximum Suppression (NMS) to merge overlapping detections
+5. Save results in `inference_results/`:
+   - Original image name: Visualization with bounding boxes
+   - `*_detections.json`: Detailed detection results including:
+     - Class ID and name
+     - Confidence score
+     - Bounding box coordinates (normalized)
+     - Tile position
 
 ## 6. Evaluation
 
@@ -175,6 +184,9 @@ yellow_sticky_traps_insects_detection/
 │   └── tiled_data/
 │       ├── train/
 │       └── test/
+├── inference_results/
+│   ├── *.jpg
+│   └── *_detections.json
 ├── requirements.txt
 ├── README.md
 └── GETTING_STARTED.md
@@ -184,7 +196,7 @@ yellow_sticky_traps_insects_detection/
 
 - All data files (images, labels, results) are ignored by git
 - Model weights and training logs are saved in `runs/`
-- Inference results are saved in `inference_results/`
+- Inference results are automatically saved in `inference_results/`
 - Evaluation results are saved in `eval_results.json`
 - Use `dataset.yaml` for training configuration
 
@@ -192,16 +204,16 @@ yellow_sticky_traps_insects_detection/
 
 1. If you get CUDA out of memory errors:
    - Reduce batch size
-   - Reduce image size
+   - Reduce patch size
    - Use a smaller model (e.g., 's' instead of 'm')
 
 2. If inference is slow:
-   - Reduce tile size
-   - Reduce overlap
+   - Reduce patch size
    - Use a smaller model
+   - Process fewer images at once
 
 3. If detection quality is poor:
    - Increase training epochs
    - Adjust confidence threshold
-   - Adjust IoU threshold
+   - Adjust IoU threshold for NMS
    - Use a larger model 
