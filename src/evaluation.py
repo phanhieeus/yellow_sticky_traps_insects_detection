@@ -147,7 +147,6 @@ def evaluate_detections(gt_labels: List[Tuple], detections: List[Dict], image_pa
             metrics['per_class'][gt_class]['false_negatives'] += 1
     
     # Tính các metrics
-    metrics['accuracy'] = metrics['true_positives'] / (metrics['total_gt'] + metrics['total_detections']) if (metrics['total_gt'] + metrics['total_detections']) > 0 else 0
     metrics['precision'] = metrics['true_positives'] / (metrics['true_positives'] + metrics['false_positives']) if (metrics['true_positives'] + metrics['false_positives']) > 0 else 0
     metrics['recall'] = metrics['true_positives'] / (metrics['true_positives'] + metrics['false_negatives']) if (metrics['true_positives'] + metrics['false_negatives']) > 0 else 0
     metrics['f1'] = 2 * metrics['precision'] * metrics['recall'] / (metrics['precision'] + metrics['recall']) if (metrics['precision'] + metrics['recall']) > 0 else 0
@@ -159,7 +158,6 @@ def evaluate_detections(gt_labels: List[Tuple], detections: List[Dict], image_pa
         fp = class_metrics['false_positives']
         fn = class_metrics['false_negatives']
         
-        class_metrics['accuracy'] = tp / (class_metrics['gt_count'] + class_metrics['detection_count']) if (class_metrics['gt_count'] + class_metrics['detection_count']) > 0 else 0
         class_metrics['precision'] = tp / (tp + fp) if (tp + fp) > 0 else 0
         class_metrics['recall'] = tp / (tp + fn) if (tp + fn) > 0 else 0
         class_metrics['f1'] = 2 * class_metrics['precision'] * class_metrics['recall'] / (class_metrics['precision'] + class_metrics['recall']) if (class_metrics['precision'] + class_metrics['recall']) > 0 else 0
@@ -232,7 +230,6 @@ def evaluate_directory(gt_dir: str, pred_dir: str, image_dir: str, iou_threshold
         total_metrics['per_image'][image_id] = metrics
 
     # Tính các metrics tổng hợp
-    total_metrics['accuracy'] = total_metrics['true_positives'] / (total_metrics['total_gt'] + total_metrics['total_detections']) if (total_metrics['total_gt'] + total_metrics['total_detections']) > 0 else 0
     total_metrics['precision'] = total_metrics['true_positives'] / (total_metrics['true_positives'] + total_metrics['false_positives']) if (total_metrics['true_positives'] + total_metrics['false_positives']) > 0 else 0
     total_metrics['recall'] = total_metrics['true_positives'] / (total_metrics['true_positives'] + total_metrics['false_negatives']) if (total_metrics['true_positives'] + total_metrics['false_negatives']) > 0 else 0
     total_metrics['f1'] = 2 * total_metrics['precision'] * total_metrics['recall'] / (total_metrics['precision'] + total_metrics['recall']) if (total_metrics['precision'] + total_metrics['recall']) > 0 else 0
@@ -244,7 +241,6 @@ def evaluate_directory(gt_dir: str, pred_dir: str, image_dir: str, iou_threshold
         fp = class_metrics['false_positives']
         fn = class_metrics['false_negatives']
         
-        class_metrics['accuracy'] = tp / (class_metrics['gt_count'] + class_metrics['detection_count']) if (class_metrics['gt_count'] + class_metrics['detection_count']) > 0 else 0
         class_metrics['precision'] = tp / (tp + fp) if (tp + fp) > 0 else 0
         class_metrics['recall'] = tp / (tp + fn) if (tp + fn) > 0 else 0
         class_metrics['f1'] = 2 * class_metrics['precision'] * class_metrics['recall'] / (class_metrics['precision'] + class_metrics['recall']) if (class_metrics['precision'] + class_metrics['recall']) > 0 else 0
@@ -274,7 +270,6 @@ def main():
     print(f"True Positives: {metrics['true_positives']}")
     print(f"False Positives: {metrics['false_positives']}")
     print(f"False Negatives: {metrics['false_negatives']}")
-    print(f"Accuracy: {metrics['accuracy']:.4f}")
     print(f"Precision: {metrics['precision']:.4f}")
     print(f"Recall: {metrics['recall']:.4f}")
     print(f"F1 Score: {metrics['f1']:.4f}")
@@ -288,7 +283,6 @@ def main():
         print(f"True Positives: {class_metrics['true_positives']}")
         print(f"False Positives: {class_metrics['false_positives']}")
         print(f"False Negatives: {class_metrics['false_negatives']}")
-        print(f"Accuracy: {class_metrics['accuracy']:.4f}")
         print(f"Precision: {class_metrics['precision']:.4f}")
         print(f"Recall: {class_metrics['recall']:.4f}")
         print(f"F1 Score: {class_metrics['f1']:.4f}")
