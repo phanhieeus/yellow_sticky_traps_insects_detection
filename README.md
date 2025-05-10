@@ -106,10 +106,11 @@ If you use this project in your research, please cite:
 ```
 @misc{yellow_sticky_traps_insects_detection,
   author = {Phan Hieu},
-  title = {Insect Detection on Yellow Sticky Traps},
-  year = {2024},
+  title = {Yellow Sticky Traps Insects Detection},
+  year = {2025},
   publisher = {GitHub},
-  url = {https://github.com/phanhieeus/yellow_sticky_traps_insects_detection}
+  journal = {GitHub repository},
+  howpublished = {\url{https://github.com/phanhieeus/yellow_sticky_traps_insects_detection}}
 }
 ```
 
