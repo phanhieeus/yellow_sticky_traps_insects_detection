@@ -1,0 +1,93 @@
+{
+  "image_path": "data/data_for_train_test/test/images/1167.jpg",
+  "detections": [
+    {
+      "bbox": [
+        3804,
+        2704,
+        3942,
+        2823
+      ],
+      "confidence": 0.5917112827301025,
+      "class": 2,
+      "class_name": "NC"
+    },
+    {
+      "bbox": [
+        798,
+        1339,
+        832,
+        1371
+      ],
+      "confidence": 0.43347784876823425,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        2179,
+        1611,
+        2241,
+        1669
+      ],
+      "confidence": 0.4186818301677704,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        3677,
+        1595,
+        3724,
+        1637
+      ],
+      "confidence": 0.4167456328868866,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        2778,
+        2477,
+        2820,
+        2519
+      ],
+      "confidence": 0.4144963324069977,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        2592,
+        2775,
+        2618,
+        2825
+      ],
+      "confidence": 0.3916853666305542,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        3112,
+        1616,
+        3177,
+        1668
+      ],
+      "confidence": 0.38409557938575745,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        3841,
+        2127,
+        3899,
+        2184
+      ],
+      "confidence": 0.3677437901496887,
+      "class": 0,
+      "class_name": "WF"
+    }
+  ]
+}

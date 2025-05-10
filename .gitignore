@@ -42,7 +42,7 @@ ENV/
 # Bỏ qua dữ liệu gốc, dữ liệu train/test, kết quả inference, kết quả evaluation
 data/
 output/
-inference_results/
+# inference_results/
 eval_results.json
 visualized_tiles/
 *.pt
@@ -74,3 +74,4 @@ kaggle.json
 !src/**/*.py 
 !final_model/best.pt
 !final_model/yolov8
+!inference_results/*.jpg

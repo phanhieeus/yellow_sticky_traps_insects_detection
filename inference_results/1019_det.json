@@ -1,0 +1,126 @@
+{
+  "image_path": "data/data_for_train_test/test/images/1019.jpg",
+  "detections": [
+    {
+      "bbox": [
+        3882,
+        1405,
+        4040,
+        1569
+      ],
+      "confidence": 0.6681114435195923,
+      "class": 1,
+      "class_name": "MR"
+    },
+    {
+      "bbox": [
+        158,
+        2025,
+        341,
+        2147
+      ],
+      "confidence": 0.6279741525650024,
+      "class": 1,
+      "class_name": "MR"
+    },
+    {
+      "bbox": [
+        1149,
+        2111,
+        1279,
+        2277
+      ],
+      "confidence": 0.617302417755127,
+      "class": 1,
+      "class_name": "MR"
+    },
+    {
+      "bbox": [
+        1336,
+        962,
+        1511,
+        1086
+      ],
+      "confidence": 0.5939414501190186,
+      "class": 1,
+      "class_name": "MR"
+    },
+    {
+      "bbox": [
+        616,
+        975,
+        720,
+        1124
+      ],
+      "confidence": 0.5740967988967896,
+      "class": 1,
+      "class_name": "MR"
+    },
+    {
+      "bbox": [
+        1037,
+        1972,
+        1217,
+        2104
+      ],
+      "confidence": 0.5340563058853149,
+      "class": 1,
+      "class_name": "MR"
+    },
+    {
+      "bbox": [
+        451,
+        1018,
+        643,
+        1137
+      ],
+      "confidence": 0.5329585671424866,
+      "class": 1,
+      "class_name": "MR"
+    },
+    {
+      "bbox": [
+        62,
+        1328,
+        239,
+        1448
+      ],
+      "confidence": 0.5057268142700195,
+      "class": 1,
+      "class_name": "MR"
+    },
+    {
+      "bbox": [
+        929,
+        734,
+        1056,
+        863
+      ],
+      "confidence": 0.4959481656551361,
+      "class": 1,
+      "class_name": "MR"
+    },
+    {
+      "bbox": [
+        18,
+        1426,
+        187,
+        1536
+      ],
+      "confidence": 0.49484783411026,
+      "class": 1,
+      "class_name": "MR"
+    },
+    {
+      "bbox": [
+        0,
+        1575,
+        109,
+        1704
+      ],
+      "confidence": 0.4611813426017761,
+      "class": 1,
+      "class_name": "MR"
+    }
+  ]
+}

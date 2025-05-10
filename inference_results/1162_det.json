@@ -1,0 +1,214 @@
+{
+  "image_path": "data/data_for_train_test/test/images/1162.jpg",
+  "detections": [
+    {
+      "bbox": [
+        3459,
+        479,
+        3564,
+        626
+      ],
+      "confidence": 0.6239892840385437,
+      "class": 1,
+      "class_name": "MR"
+    },
+    {
+      "bbox": [
+        3665,
+        2051,
+        3708,
+        2094
+      ],
+      "confidence": 0.4345405101776123,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        1127,
+        782,
+        1184,
+        835
+      ],
+      "confidence": 0.43038684129714966,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        1798,
+        2033,
+        1844,
+        2074
+      ],
+      "confidence": 0.41471245884895325,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        704,
+        1993,
+        751,
+        2032
+      ],
+      "confidence": 0.41213536262512207,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        609,
+        1447,
+        649,
+        1478
+      ],
+      "confidence": 0.4048425555229187,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        584,
+        1429,
+        619,
+        1460
+      ],
+      "confidence": 0.404830664396286,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        3349,
+        1244,
+        3390,
+        1284
+      ],
+      "confidence": 0.4030754864215851,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        2816,
+        1986,
+        2871,
+        2036
+      ],
+      "confidence": 0.3997569680213928,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        1701,
+        2656,
+        1727,
+        2701
+      ],
+      "confidence": 0.39903587102890015,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        536,
+        456,
+        607,
+        536
+      ],
+      "confidence": 0.389864981174469,
+      "class": 1,
+      "class_name": "MR"
+    },
+    {
+      "bbox": [
+        236,
+        1980,
+        276,
+        2014
+      ],
+      "confidence": 0.37828972935676575,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        895,
+        1989,
+        950,
+        2036
+      ],
+      "confidence": 0.37371689081192017,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        4197,
+        994,
+        4243,
+        1031
+      ],
+      "confidence": 0.37129122018814087,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        414,
+        552,
+        463,
+        588
+      ],
+      "confidence": 0.36982014775276184,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        1682,
+        1626,
+        1727,
+        1676
+      ],
+      "confidence": 0.36276698112487793,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        3307,
+        2802,
+        3356,
+        2856
+      ],
+      "confidence": 0.35946646332740784,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        1147,
+        658,
+        1187,
+        700
+      ],
+      "confidence": 0.35422685742378235,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        4400,
+        474,
+        4440,
+        512
+      ],
+      "confidence": 0.3503451943397522,
+      "class": 0,
+      "class_name": "WF"
+    }
+  ]
+}

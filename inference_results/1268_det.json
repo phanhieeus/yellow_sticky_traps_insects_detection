@@ -1,0 +1,489 @@
+{
+  "image_path": "data/data_for_train_test/test/images/1268.jpg",
+  "detections": [
+    {
+      "bbox": [
+        3078,
+        2052,
+        3189,
+        2180
+      ],
+      "confidence": 0.5753177404403687,
+      "class": 1,
+      "class_name": "MR"
+    },
+    {
+      "bbox": [
+        2003,
+        750,
+        2117,
+        862
+      ],
+      "confidence": 0.5248661041259766,
+      "class": 1,
+      "class_name": "MR"
+    },
+    {
+      "bbox": [
+        3914,
+        2811,
+        4025,
+        2929
+      ],
+      "confidence": 0.46332672238349915,
+      "class": 1,
+      "class_name": "MR"
+    },
+    {
+      "bbox": [
+        3796,
+        729,
+        3840,
+        769
+      ],
+      "confidence": 0.4461745619773865,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        1811,
+        645,
+        1864,
+        692
+      ],
+      "confidence": 0.4274223744869232,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        4511,
+        2757,
+        4568,
+        2807
+      ],
+      "confidence": 0.4203464984893799,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        3481,
+        726,
+        3529,
+        774
+      ],
+      "confidence": 0.42024779319763184,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        4665,
+        573,
+        4714,
+        621
+      ],
+      "confidence": 0.4197791516780853,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        4209,
+        2020,
+        4273,
+        2073
+      ],
+      "confidence": 0.4182813763618469,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        1873,
+        2659,
+        1929,
+        2708
+      ],
+      "confidence": 0.41762542724609375,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        4825,
+        867,
+        4863,
+        902
+      ],
+      "confidence": 0.41551944613456726,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        3676,
+        1009,
+        3727,
+        1051
+      ],
+      "confidence": 0.4151929020881653,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        2884,
+        1629,
+        2944,
+        1679
+      ],
+      "confidence": 0.41494888067245483,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        4597,
+        2736,
+        4642,
+        2785
+      ],
+      "confidence": 0.41303154826164246,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        4496,
+        1927,
+        4552,
+        1972
+      ],
+      "confidence": 0.41235771775245667,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        2239,
+        1215,
+        2297,
+        1267
+      ],
+      "confidence": 0.41183245182037354,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        3415,
+        2478,
+        3455,
+        2535
+      ],
+      "confidence": 0.411136269569397,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        2527,
+        1051,
+        2579,
+        1101
+      ],
+      "confidence": 0.4109787940979004,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        2430,
+        884,
+        2499,
+        942
+      ],
+      "confidence": 0.41092362999916077,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        5023,
+        671,
+        5072,
+        712
+      ],
+      "confidence": 0.410514771938324,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        395,
+        1603,
+        447,
+        1648
+      ],
+      "confidence": 0.40905076265335083,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        4529,
+        2688,
+        4576,
+        2730
+      ],
+      "confidence": 0.4086729884147644,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        4890,
+        2506,
+        4942,
+        2550
+      ],
+      "confidence": 0.408096581697464,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        4926,
+        2422,
+        4975,
+        2472
+      ],
+      "confidence": 0.4080735445022583,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        1611,
+        2450,
+        1672,
+        2511
+      ],
+      "confidence": 0.4041130542755127,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        2165,
+        1987,
+        2226,
+        2039
+      ],
+      "confidence": 0.403470903635025,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        3416,
+        811,
+        3455,
+        858
+      ],
+      "confidence": 0.4025244414806366,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        5019,
+        1018,
+        5073,
+        1061
+      ],
+      "confidence": 0.4010796546936035,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        4467,
+        2396,
+        4523,
+        2446
+      ],
+      "confidence": 0.39902520179748535,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        4679,
+        2806,
+        4723,
+        2850
+      ],
+      "confidence": 0.3983786702156067,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        3732,
+        725,
+        3784,
+        775
+      ],
+      "confidence": 0.3976413905620575,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        2129,
+        1880,
+        2209,
+        1943
+      ],
+      "confidence": 0.3973914682865143,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        2769,
+        757,
+        2834,
+        810
+      ],
+      "confidence": 0.3961414098739624,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        3852,
+        1522,
+        3908,
+        1570
+      ],
+      "confidence": 0.3944873511791229,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        4245,
+        2148,
+        4300,
+        2202
+      ],
+      "confidence": 0.39395058155059814,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        4833,
+        790,
+        4884,
+        834
+      ],
+      "confidence": 0.39179718494415283,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        4137,
+        2653,
+        4192,
+        2698
+      ],
+      "confidence": 0.38794830441474915,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        4819,
+        559,
+        4878,
+        609
+      ],
+      "confidence": 0.3863416910171509,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        396,
+        1561,
+        439,
+        1606
+      ],
+      "confidence": 0.385958731174469,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        1728,
+        807,
+        1774,
+        860
+      ],
+      "confidence": 0.3829646706581116,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        4795,
+        1123,
+        4848,
+        1177
+      ],
+      "confidence": 0.37915298342704773,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        3589,
+        2510,
+        3643,
+        2557
+      ],
+      "confidence": 0.37557873129844666,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        1962,
+        1209,
+        2011,
+        1259
+      ],
+      "confidence": 0.37182891368865967,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        3293,
+        2712,
+        3349,
+        2761
+      ],
+      "confidence": 0.36681297421455383,
+      "class": 0,
+      "class_name": "WF"
+    }
+  ]
+}

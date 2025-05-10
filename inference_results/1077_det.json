@@ -1,0 +1,137 @@
+{
+  "image_path": "data/data_for_train_test/test/images/1077.jpg",
+  "detections": [
+    {
+      "bbox": [
+        930,
+        1817,
+        1055,
+        1948
+      ],
+      "confidence": 0.8008542060852051,
+      "class": 2,
+      "class_name": "NC"
+    },
+    {
+      "bbox": [
+        127,
+        1270,
+        261,
+        1418
+      ],
+      "confidence": 0.7691525816917419,
+      "class": 2,
+      "class_name": "NC"
+    },
+    {
+      "bbox": [
+        3539,
+        1409,
+        3655,
+        1569
+      ],
+      "confidence": 0.7508313655853271,
+      "class": 2,
+      "class_name": "NC"
+    },
+    {
+      "bbox": [
+        336,
+        2133,
+        452,
+        2275
+      ],
+      "confidence": 0.7077223658561707,
+      "class": 2,
+      "class_name": "NC"
+    },
+    {
+      "bbox": [
+        1073,
+        1789,
+        1199,
+        1891
+      ],
+      "confidence": 0.6383446455001831,
+      "class": 2,
+      "class_name": "NC"
+    },
+    {
+      "bbox": [
+        2592,
+        2431,
+        2710,
+        2541
+      ],
+      "confidence": 0.6100134253501892,
+      "class": 2,
+      "class_name": "NC"
+    },
+    {
+      "bbox": [
+        4324,
+        1929,
+        4424,
+        2099
+      ],
+      "confidence": 0.5951780080795288,
+      "class": 2,
+      "class_name": "NC"
+    },
+    {
+      "bbox": [
+        372,
+        1166,
+        529,
+        1291
+      ],
+      "confidence": 0.5638766288757324,
+      "class": 2,
+      "class_name": "NC"
+    },
+    {
+      "bbox": [
+        1042,
+        523,
+        1153,
+        608
+      ],
+      "confidence": 0.49076196551322937,
+      "class": 2,
+      "class_name": "NC"
+    },
+    {
+      "bbox": [
+        2016,
+        2202,
+        2086,
+        2323
+      ],
+      "confidence": 0.43380647897720337,
+      "class": 2,
+      "class_name": "NC"
+    },
+    {
+      "bbox": [
+        2079,
+        2225,
+        2165,
+        2295
+      ],
+      "confidence": 0.403385728597641,
+      "class": 2,
+      "class_name": "NC"
+    },
+    {
+      "bbox": [
+        3130,
+        513,
+        3156,
+        536
+      ],
+      "confidence": 0.39154577255249023,
+      "class": 0,
+      "class_name": "WF"
+    }
+  ]
+}

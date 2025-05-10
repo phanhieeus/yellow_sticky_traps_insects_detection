@@ -1,0 +1,71 @@
+{
+  "image_path": "data/data_for_train_test/test/images/1057.jpg",
+  "detections": [
+    {
+      "bbox": [
+        1140,
+        2092,
+        1248,
+        2239
+      ],
+      "confidence": 0.7490979433059692,
+      "class": 2,
+      "class_name": "NC"
+    },
+    {
+      "bbox": [
+        2121,
+        1284,
+        2276,
+        1404
+      ],
+      "confidence": 0.7085545659065247,
+      "class": 2,
+      "class_name": "NC"
+    },
+    {
+      "bbox": [
+        2413,
+        2147,
+        2515,
+        2284
+      ],
+      "confidence": 0.6661121249198914,
+      "class": 2,
+      "class_name": "NC"
+    },
+    {
+      "bbox": [
+        4686,
+        1843,
+        4815,
+        1991
+      ],
+      "confidence": 0.6300839185714722,
+      "class": 2,
+      "class_name": "NC"
+    },
+    {
+      "bbox": [
+        2445,
+        2284,
+        2588,
+        2448
+      ],
+      "confidence": 0.5880609154701233,
+      "class": 2,
+      "class_name": "NC"
+    },
+    {
+      "bbox": [
+        3155,
+        2842,
+        3203,
+        2880
+      ],
+      "confidence": 0.3551476001739502,
+      "class": 0,
+      "class_name": "WF"
+    }
+  ]
+}

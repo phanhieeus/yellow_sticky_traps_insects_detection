@@ -1,0 +1,38 @@
+{
+  "image_path": "data/data_for_train_test/test/images/1280.jpg",
+  "detections": [
+    {
+      "bbox": [
+        2253,
+        2618,
+        2369,
+        2794
+      ],
+      "confidence": 0.5888251662254333,
+      "class": 1,
+      "class_name": "MR"
+    },
+    {
+      "bbox": [
+        2642,
+        2795,
+        2716,
+        2869
+      ],
+      "confidence": 0.4215906262397766,
+      "class": 0,
+      "class_name": "WF"
+    },
+    {
+      "bbox": [
+        733,
+        1860,
+        863,
+        1971
+      ],
+      "confidence": 0.36129477620124817,
+      "class": 1,
+      "class_name": "MR"
+    }
+  ]
+}

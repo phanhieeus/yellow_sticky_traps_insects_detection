@@ -1,0 +1,60 @@
+{
+  "image_path": "data/data_for_train_test/test/images/1058.jpg",
+  "detections": [
+    {
+      "bbox": [
+        1901,
+        1574,
+        2056,
+        1689
+      ],
+      "confidence": 0.8375135660171509,
+      "class": 2,
+      "class_name": "NC"
+    },
+    {
+      "bbox": [
+        248,
+        2147,
+        400,
+        2247
+      ],
+      "confidence": 0.752571702003479,
+      "class": 2,
+      "class_name": "NC"
+    },
+    {
+      "bbox": [
+        3767,
+        2047,
+        3925,
+        2180
+      ],
+      "confidence": 0.7328997850418091,
+      "class": 2,
+      "class_name": "NC"
+    },
+    {
+      "bbox": [
+        2369,
+        744,
+        2498,
+        861
+      ],
+      "confidence": 0.7048817873001099,
+      "class": 2,
+      "class_name": "NC"
+    },
+    {
+      "bbox": [
+        3636,
+        2782,
+        3760,
+        2867
+      ],
+      "confidence": 0.38545215129852295,
+      "class": 1,
+      "class_name": "MR"
+    }
+  ]
+}
