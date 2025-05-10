@@ -33,10 +33,10 @@ def main():
     # Tạo file dataset.yaml
     dataset_yaml = Path(args.data_dir) / 'dataset.yaml'
     create_dataset_yaml(args.data_dir, dataset_yaml)
-
+    
     # Khởi tạo model
     model = YOLO(f'yolov8{args.model_size}.pt')
-
+    
     # Train
     results = model.train(
         data=str(dataset_yaml),
@@ -53,7 +53,7 @@ def main():
         seed=42,
         deterministic=True
     )
-
+    
     # Lưu best.pt về output_dir
     best_model_path = Path(args.output_dir) / 'train' / 'weights' / 'best.pt'
     if best_model_path.exists():
@@ -74,6 +74,6 @@ def main():
         exist_ok=True
     )
     print("Validation complete.")
-
+    
 if __name__ == '__main__':
     main() 

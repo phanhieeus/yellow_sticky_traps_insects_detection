@@ -40,7 +40,7 @@ ENV/
 
 # Project specific
 # Bỏ qua dữ liệu gốc, dữ liệu train/test, kết quả inference, kết quả evaluation
-/data/
+data/
 output/
 inference_results/
 eval_results.json
@@ -68,8 +68,6 @@ kaggle.json
 *.tif
 *.tiff
 
-# Bỏ qua các file json kết quả detection
-*_det.json
 
 # Allow Python files in src directory
 !src/
