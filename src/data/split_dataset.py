@@ -147,12 +147,13 @@ def main():
     print(f"\nDataset has been split and saved to {output_dir}")
     print(f"Split information saved to {os.path.join(output_dir, 'split_info.json')}")
     
-    # Remove original dataset directory
+    # Remove annotations directory since we have labels in correct format
     try:
-        shutil.rmtree(base_dir)
-        print(f"\nRemoved original dataset directory: {base_dir}")
+        annotations_dir = os.path.join(base_dir, 'annotations')
+        shutil.rmtree(annotations_dir)
+        print(f"\nRemoved annotations directory: {annotations_dir}")
     except Exception as e:
-        print(f"\nWarning: Failed to remove original dataset directory: {e}")
+        print(f"\nWarning: Failed to remove annotations directory: {e}")
 
 if __name__ == '__main__':
     main() 
