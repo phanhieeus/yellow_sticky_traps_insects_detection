@@ -94,6 +94,28 @@ python src/train.py \
     --device 0
 ```
 
+### Training Parameters
+
+You can customize the training process by adjusting these parameters:
+
+- `--data_dir`: Directory containing the dataset (default: data/tiled_data)
+- `--output_dir`: Directory to save model weights and logs (default: runs/yolov8)
+- `--model_size`: YOLOv8 model size (n, s, m, l, x) (default: m)
+  - n: nano (fastest, lowest accuracy)
+  - s: small
+  - m: medium (balanced)
+  - l: large
+  - x: xlarge (slowest, highest accuracy)
+- `--epochs`: Number of training epochs (default: 100)
+- `--batch_size`: Batch size (default: 16)
+  - Increase if you have more GPU memory
+  - Decrease if you get CUDA out of memory errors
+- `--img_size`: Input image size (default: 864)
+  - Must match the tile size used in data preparation
+- `--device`: GPU device index (default: 0)
+  - Use -1 for CPU (not recommended)
+  - Use 0, 1, etc. for specific GPUs
+
 The training script will:
 - Use tiles in `data/tiled_data/train/` for training
 - Use tiles in `data/tiled_data/test/` for validation
@@ -120,6 +142,23 @@ python src/inference.py \
     --output inference_results
 ```
 
+### Inference Parameters
+
+Customize the inference process with these parameters:
+
+- `--model`: Path to the trained model file (default: runs/yolov8/best.pt)
+- `--input`: Path to input image or directory containing images
+- `--output`: Directory to save results (default: inference_results)
+- `--conf`: Confidence threshold (default: 0.35)
+  - Increase for fewer but more confident detections
+  - Decrease for more detections but potentially more false positives
+- `--iou`: IoU threshold for NMS (default: 0.45)
+  - Increase to be more strict about overlapping detections
+  - Decrease to allow more overlapping detections
+- `--device`: Device to run inference on (default: 0)
+  - Use -1 for CPU (not recommended)
+  - Use 0, 1, etc. for specific GPUs
+
 The inference script will:
 1. Process each image by splitting it into patches of size 864x864
 2. Run detection on each patch with confidence threshold of 0.35
@@ -145,59 +184,31 @@ python src/evaluation.py \
     --output inference_results/eval_results.json
 ```
 
+### Evaluation Parameters
+
+Customize the evaluation process with these parameters:
+
+- `--gt`: Path to directory containing ground truth labels (YOLO format .txt)
+- `--pred`: Path to directory containing detection results (JSON files)
+- `--images`: Path to directory containing test images
+- `--output`: JSON file to save evaluation results (default: eval_results.json)
+- `--iou`: IoU threshold for determining true positives (default: 0.5)
+  - Increase for stricter matching between predictions and ground truth
+  - Decrease for more lenient matching
+- `--conf`: Minimum confidence threshold for predictions (default: 0.001)
+  - Only affects evaluation, not the actual predictions
+  - Use to analyze model performance at different confidence levels
+
 The evaluation script will:
 - Compare detections with ground truth labels
 - Calculate metrics per class and overall:
   - True Positives (TP)
   - False Positives (FP)
   - False Negatives (FN)
-  - Accuracy
   - Precision
   - Recall
   - F1 Score
 - Save detailed results in `inference_results/eval_results.json`
-
-## 7. Visualizing Results
-
-To visualize the tiled images and their labels:
-
-```bash
-python src/utils/visualize_tile.py \
-    --tile_dir data/tiled_data/train/images \
-    --label_dir data/tiled_data/train/labels \
-    --output_dir visualized_tiles \
-    --num 10
-```
-
-## Project Structure
-
-After setup, your project should have this structure:
-```
-yellow_sticky_traps_insects_detection/
-├── src/
-│   ├── data/
-│   │   ├── preprocessing.py
-│   │   └── dataset.py
-│   ├── train.py
-│   ├── inference.py
-│   ├── evaluation.py
-│   └── utils/
-│       └── visualize_tile.py
-├── data/
-│   ├── data_for_train_test/
-│   │   ├── train/
-│   │   └── test/
-│   └── tiled_data/
-│       ├── train/
-│       └── test/
-├── inference_results/
-│   ├── *_det.jpg
-│   ├── *_det.json
-│   └── eval_results.json
-├── requirements.txt
-├── README.md
-└── GETTING_STARTED.md
-```
 
 ## Notes
 
@@ -210,17 +221,24 @@ yellow_sticky_traps_insects_detection/
 ## Troubleshooting
 
 1. If you get CUDA out of memory errors:
-   - Reduce batch size
-   - Reduce patch size
-   - Use a smaller model (e.g., 's' instead of 'm')
+   - Reduce batch size (e.g., --batch_size 8)
+   - Reduce patch size (e.g., --img_size 640)
+   - Use a smaller model (e.g., --model_size s)
+   - Close other GPU applications
 
 2. If inference is slow:
-   - Reduce patch size
-   - Use a smaller model
+   - Reduce patch size (e.g., --img_size 640)
+   - Use a smaller model (e.g., --model_size s)
    - Process fewer images at once
+   - Use a more powerful GPU
 
 3. If detection quality is poor:
    - Adjust confidence threshold (default: 0.35)
+     - Increase for fewer but more confident detections
+     - Decrease for more detections but potentially more false positives
    - Adjust IoU threshold for NMS (default: 0.45)
-   - Increase training epochs
-   - Use a larger model 
+     - Increase to be more strict about overlapping detections
+     - Decrease to allow more overlapping detections
+   - Increase training epochs (e.g., --epochs 200)
+   - Use a larger model (e.g., --model_size l)
+   - Check dataset quality and annotations 
