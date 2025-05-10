@@ -18,17 +18,6 @@ The project uses YOLOv8m (medium) model trained on:
 - Model size: 50MB
 - Location: `final_model/best.pt`
 
-## Results
-
-Our YOLOv8 model achieves:
-- Precision: 0.8857 (88.57%)
-- Recall: 0.8841 (88.41%)
-- F1 Score: 0.8849 (88.49%)
-
-Per-class performance:
-- WF: Precision 0.8978, Recall 0.8479, F1 0.8722
-- MR: Precision 0.8850, Recall 0.8850, F1 0.8850
-- NC: Precision 0.7391, Recall 1.0000, F1 0.8499
 
 ### Sample Results
 
@@ -42,6 +31,24 @@ The repository includes sample detection results in the `inference_results/` dir
     - Bounding box coordinates
     - Tile position
 - Evaluation metrics saved in `inference_results/eval_results.json`
+
+## Evaluation Results (Test set)
+
+**Overall Metrics:**
+- Total Ground Truth Objects: 1148
+- Total Detected Objects: 1146
+- True Positives: 1015
+- False Positives: 131
+- False Negatives: 133
+- Precision: 0.8857
+- Recall: 0.8841
+- F1 Score: 0.8849
+- mAP50: 0.7860
+
+**Per-Class Metrics:**
+- **WF**: Precision 0.8978, Recall 0.8479, F1 0.8721, mAP50 0.7736
+- **MR**: Precision 0.8850, Recall 0.8850, F1 0.8850, mAP50 0.8020
+- **NC**: Precision 0.7391, Recall 1.0000, F1 0.8500, mAP50 0.7823
 
 ## Features
 
