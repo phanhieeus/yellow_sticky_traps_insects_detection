@@ -21,6 +21,10 @@ pip install -r requirements.txt
 
 ## 2. Download Dataset
 
+You have two options to download the dataset:
+
+### Option 1: Download from Kaggle
+
 1. Create a Kaggle account if you don't have one
 2. Get your Kaggle API credentials:
    - Go to https://www.kaggle.com/settings/account
@@ -39,6 +43,19 @@ chmod 600 ~/.kaggle/kaggle.json
 ```bash
 ./download_dataset.sh
 ```
+
+### Option 2: Download from Google Drive
+
+Simply run the download script:
+```bash
+./download_dataset_gdrive.sh
+```
+
+Both options will:
+- Download the dataset
+- Extract it to the correct directory structure
+- Verify the dataset structure is correct
+- The dataset will be available at: `data/yellow-sticky-traps-dataset-main/`
 
 ## 3. Data Preparation
 
