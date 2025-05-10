@@ -119,32 +119,26 @@ def plot_statistics(stats, output_dir, prefix=""):
 
 def main():
     parser = argparse.ArgumentParser(description='Analyze YOLO format dataset statistics')
-    parser.add_argument('--data_dir', type=str, required=True, help='Path to dataset directory')
-    parser.add_argument('--output_dir', type=str, required=True, help='Output directory to save results')
-    parser.add_argument('--labels_dir', type=str, default=None, help='Path to YOLO labels directory (optional, overrides data_dir)')
+    parser.add_argument('--labels_dir', type=str, required=True, help='Path to YOLO labels directory')
     args = parser.parse_args()
     
-    # Determine labels directory
-    if args.labels_dir:
-        labels_dir = args.labels_dir
-        prefix = os.path.basename(os.path.dirname(labels_dir.rstrip('/'))) + "_"
-    else:
-        labels_dir = os.path.join(args.data_dir, 'yellow-sticky-traps-dataset-main', 'labels')
-        prefix = ""
+    # Get input directory name for output
+    input_dir_name = os.path.basename(os.path.dirname(args.labels_dir.rstrip('/')))
+    output_dir = os.path.join('analysis_results', input_dir_name)
     
     # Create output directory if it doesn't exist
-    os.makedirs(args.output_dir, exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
     
     # Analyze dataset
-    stats = analyze_labels(labels_dir)
+    stats = analyze_labels(args.labels_dir)
     
     # Save statistics to JSON
-    json_path = os.path.join(args.output_dir, f'{prefix}stats.json')
+    json_path = os.path.join(output_dir, 'stats.json')
     with open(json_path, 'w') as f:
         json.dump(stats, f, indent=2)
     
     # Create visualizations
-    plot_statistics(stats, args.output_dir, prefix=prefix)
+    plot_statistics(stats, output_dir)
     
     print(f"\nDataset Statistics:")
     print(f"Total Images: {stats['total_images']}")
@@ -158,8 +152,8 @@ def main():
     print(f"  Min: {stats['objects_per_image_stats']['min']}")
     print(f"  Max: {stats['objects_per_image_stats']['max']}")
     
-    print(f"\nResults saved to {args.output_dir}")
-    print(f"Visualizations and statistics saved to {args.output_dir}")
+    print(f"\nResults saved to {output_dir}")
+    print(f"Visualizations and statistics saved to {output_dir}")
 
 if __name__ == '__main__':
     main() 
