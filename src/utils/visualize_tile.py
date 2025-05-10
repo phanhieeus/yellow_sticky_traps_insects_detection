@@ -6,7 +6,7 @@ from pathlib import Path
 def draw_boxes(image_path, label_path, output_path, class_names=None):
     img = cv2.imread(str(image_path))
     h, w = img.shape[:2]
-    color_map = [(0,255,0), (0,0,255), (255,0,0)]  # WF: green, MR: red, NC: blue
+    color_map = [(0,255,0), (255,0,0), (0,0,255)]  # WF: green, MR: red, NC: blue
     if class_names is None:
         class_names = ['WF', 'MR', 'NC']
     if os.path.exists(label_path):
