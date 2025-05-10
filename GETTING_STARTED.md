@@ -281,6 +281,53 @@ The evaluation script will:
   - F1 Score
 - Save detailed results in `inference_results/eval_results.json`
 
+## 9. Error Analysis
+
+After evaluating the model, you can analyze the worst performing images to understand where the model fails:
+
+```bash
+# Analyze worst performing images based on F1 score (default)
+python error_analysis/error_analysis.py
+
+# Analyze based on Precision
+python error_analysis/error_analysis.py --metric precision
+
+# Analyze based on Recall
+python error_analysis/error_analysis.py --metric recall
+
+# Change number of images to analyze (default: 5)
+python error_analysis/error_analysis.py --n 10
+```
+
+### Error Analysis Parameters
+
+Customize the analysis with these parameters:
+
+- `--metric`: Metric to sort by (default: f1)
+  - f1: F1 score (balanced measure of precision and recall)
+  - precision: Precision score (accuracy of positive predictions)
+  - recall: Recall score (ability to find all positive instances)
+- `--n`: Number of worst performing images to analyze (default: 5)
+
+### Analysis Output
+
+The script will:
+1. Read evaluation metrics from `inference_results/eval_results.json`
+2. Sort images based on the specified metric
+3. Visualize each image with:
+   - Ground truth boxes in green (GT_WF, GT_MR, GT_NC)
+   - Prediction boxes in red (Pred_WF, Pred_MR, Pred_NC)
+   - Confidence scores for predictions
+   - F1, Precision, and Recall metrics
+4. Save visualizations in `error_analysis/worst_performing/`
+5. Print detailed metrics for each analyzed image
+
+This analysis helps:
+- Identify common failure cases
+- Understand model weaknesses
+- Guide improvements in training and data collection
+- Make informed decisions about model architecture and hyperparameters
+
 ## Notes
 
 - All data files (images, labels, results) are ignored by git

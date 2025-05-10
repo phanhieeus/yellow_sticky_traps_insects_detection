@@ -59,6 +59,8 @@ The repository includes sample detection results in the `inference_results/` dir
 - Inference on full-size images
 - Visualization tools
 - Comprehensive evaluation metrics
+- Error analysis for worst performing images
+- Detailed documentation and getting started guide
 
 ## Project Structure
 
@@ -88,9 +90,18 @@ yellow_sticky_traps_insects_detection/
 │   ├── *_det.jpg        # Visualization images
 │   ├── *_det.json       # Detection details
 │   └── eval_results.json # Evaluation metrics
-├── requirements.txt       # Python dependencies
-├── README.md             # Project overview
-└── GETTING_STARTED.md    # Detailed instructions
+├── error_analysis/       # Error analysis tools
+│   ├── error_analysis.py # Script for analyzing worst performing images
+│   └── worst_performing/ # Visualizations of worst performing images
+├── dataset_statistics/   # Dataset analysis results
+│   ├── data_for_train_test/  # Statistics for original dataset
+│   └── tiled_data/          # Statistics for tiled dataset
+├── visualized_tiles/     # Visualized tile images
+├── download_dataset.sh   # Script to download dataset from Kaggle
+├── download_dataset_gdrive.sh # Script to download dataset from Google Drive
+├── requirements.txt      # Python dependencies
+├── README.md            # Project overview
+└── GETTING_STARTED.md   # Detailed instructions
 ```
 
 ## Quick Start
