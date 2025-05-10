@@ -72,3 +72,5 @@ kaggle.json
 # Allow Python files in src directory
 !src/
 !src/**/*.py 
+!final_model/best.pt
+!final_model/yolov8
