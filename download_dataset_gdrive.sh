@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Create data directory if it doesn't exist
-mkdir -p data
+mkdir -p data/yellow-sticky-traps-dataset-main
 
 # Download dataset from Google Drive using file ID
 echo "Downloading dataset from Google Drive..."
@@ -11,9 +11,9 @@ gdown 1c-b0r294GiZ3akk5XLgOYZYkcyTccoUs -O data/dataset.zip
 if [ $? -eq 0 ]; then
     echo "Dataset downloaded successfully!"
     
-    # Unzip the dataset
+    # Unzip the dataset directly to data/yellow-sticky-traps-dataset-main
     echo "Extracting dataset..."
-    unzip -q data/dataset.zip -d data/
+    unzip -q data/dataset.zip -d data/yellow-sticky-traps-dataset-main
     
     # Check if the directory structure is correct
     if [ ! -d "data/yellow-sticky-traps-dataset-main" ]; then
