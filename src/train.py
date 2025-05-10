@@ -11,7 +11,7 @@ def create_dataset_yaml(base_dir, output_path):
     base_dir = Path(base_dir)
     yaml_content = {
         'path': str(base_dir.absolute()),
-        'train': 'train_split/images',
+        'train': 'train/images',
         'val': 'test/images',
         'names': ['WF', 'MR', 'NC']
     }
@@ -62,18 +62,18 @@ def main():
     else:
         print("Warning: best.pt not found!")
 
-    # Validate trên val set
-    print("\nValidating on val set...")
-    results_val = model.val(
+    # Validate trên test set
+    print("\nValidating on test set...")
+    results_test = model.val(
         data=str(dataset_yaml),
         batch=args.batch_size,
         imgsz=args.img_size,
         device=args.device,
         project=args.output_dir,
-        name='val',
+        name='test',
         exist_ok=True
     )
-    print("Validation complete.")
+    print("Test validation complete.")
     
 if __name__ == '__main__':
     main() 

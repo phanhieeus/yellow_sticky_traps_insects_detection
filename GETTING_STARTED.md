@@ -95,7 +95,7 @@ python src/train.py \
 ```
 
 The training script will:
-- Use tiles in `data/tiled_data/train_split/` for training
+- Use tiles in `data/tiled_data/train/` for training
 - Use tiles in `data/tiled_data/test/` for validation
 - Save the best model as `runs/yolov8/best.pt`
 - Generate training logs and metrics in `runs/yolov8/`
@@ -173,7 +173,7 @@ yellow_sticky_traps_insects_detection/
 │   │   ├── train/
 │   │   └── test/
 │   └── tiled_data/
-│       ├── train_split/
+│       ├── train/
 │       └── test/
 ├── requirements.txt
 ├── README.md

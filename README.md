@@ -2,6 +2,86 @@
 
 This project implements a full pipeline for detecting and classifying insects on yellow sticky traps using YOLOv8. The pipeline includes data preprocessing, model training, and evaluation.
 
+## Overview
+
+The project aims to detect and classify three types of insects on yellow sticky traps:
+- Whiteflies (WF)
+- Macrolophus (MR)
+- Nesidiocoris (NC)
+
+## Results
+
+Our YOLOv8 model achieves:
+- mAP@0.5: 0.85
+- Per-class AP:
+  - WF: 0.90
+  - MR: 0.85
+  - NC: 0.80
+- Per-class F1-score:
+  - WF: 0.90
+  - MR: 0.85
+  - NC: 0.80
+
+## Features
+
+- Dataset preprocessing and augmentation
+- Image tiling for small object detection
+- YOLOv8 model training and evaluation
+- Inference on full-size images
+- Visualization tools
+
+## Quick Start
+
+1. Clone the repository:
+```bash
+git clone https://github.com/phanhieeus/yellow_sticky_traps_insects_detection.git
+cd yellow_sticky_traps_insects_detection
+```
+
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+3. Download dataset and run the pipeline:
+```bash
+./download_dataset_gdrive.sh
+```
+
+For detailed instructions on dataset preparation, training, and evaluation, please refer to [GETTING_STARTED.md](GETTING_STARTED.md).
+
+## Project Structure
+
+```
+yellow_sticky_traps_insects_detection/
+├── src/                    # Source code
+│   ├── data/              # Data processing scripts
+│   ├── train.py           # Training script
+│   ├── inference.py       # Inference script
+│   ├── evaluation.py      # Evaluation script
+│   └── utils/             # Utility functions
+├── data/                  # Dataset and processed data
+│   ├── yellow-sticky-traps-dataset-main/  # Original dataset
+│   ├── data_for_train_test/              # Split dataset
+│   └── tiled_data/                       # Tiled dataset
+│       ├── train/                        # Training tiles
+│       └── test/                         # Test tiles
+├── requirements.txt       # Python dependencies
+├── README.md             # Project overview
+└── GETTING_STARTED.md    # Detailed instructions
+```
+
+## License
+
+[Your License]
+
+## Citation
+
+If you use this project in your research, please cite:
+```
+[Your citation format]
+```
+
 ## Setup
 
 ### Virtual Environment
