@@ -26,8 +26,16 @@ kaggle datasets download -d phnvnh/yellow-sticky-traps-dataset-vip -p data --unz
 
 # Check if download was successful
 if [ $? -eq 0 ]; then
+    # Check if the directory structure is correct
+    if [ ! -d "data/yellow-sticky-traps-dataset-main" ]; then
+        echo "Error: Dataset structure is incorrect"
+        echo "Expected: data/yellow-sticky-traps-dataset-main"
+        echo "Please check the downloaded dataset"
+        exit 1
+    fi
+    
     echo "Dataset downloaded and extracted successfully!"
-    echo "Dataset location: $(pwd)/data"
+    echo "Dataset location: $(pwd)/data/yellow-sticky-traps-dataset-main"
 else
     echo "Error: Failed to download dataset"
     exit 1
