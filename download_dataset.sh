@@ -22,7 +22,7 @@ mkdir -p data
 
 # Download dataset
 echo "Downloading dataset..."
-kaggle datasets download -d friso1987/yellow-sticky-traps -p data --unzip
+kaggle datasets download -d phnvnh/yellow-sticky-traps-dataset-vip -p data --unzip
 
 # Check if download was successful
 if [ $? -eq 0 ]; then
