@@ -40,10 +40,11 @@ ENV/
 
 # Project specific
 # Bỏ qua dữ liệu gốc, dữ liệu train/test, kết quả inference, kết quả evaluation
-/data/
-/output/
-/inference_results/
-/eval_results.json
+data/
+output/
+inference_results/
+eval_results.json
+visualized_tiles/
 *.pt
 *.pth
 *.weights

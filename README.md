@@ -251,130 +251,105 @@ After training completes, you will get:
 You can use the `best.pt` model for inference on new images or for further evaluation on the original (non-tiled) test set.
 
 
+## Inference
 
+The `inference.py` script allows running inference on large images by splitting them into tiles and applying NMS to remove duplicate detections.
 
-## Features
-
-- Data preprocessing and analysis:
-  - XML to YOLO format annotation conversion
-  - Detailed dataset statistics and visualizations
-  - Class distribution analysis
-  - Object size and density analysis
-
-- Dataset preparation:
-  - Dataset splitting with class balance preservation
-  - Image tiling with overlap for small object detection
-  - Automatic handling of multi-scale objects
-
-- Model training and inference:
-  - YOLOv8 model training with GPU support
-  - Full-size image inference with tiling
-  - Non-maximum suppression (NMS) for overlapping detections
-
-- Evaluation and visualization:
-  - Per-class precision, recall, and F1-score
-  - Confusion matrix generation
-  - Detection visualization tools
-  - Performance metrics tracking
-
-
-
-## Project Structure
-
-```
-.
-├── src/
-│   ├── data/
-│   │   ├── preprocessing.py  # Image rotation and annotation conversion
-│   │   └── dataset.py       # Dataset splitting and tiling
-│   ├── train.py             # Model training
-│   ├── inference.py         # Inference on full-size images
-│   ├── evaluation.py        # Evaluation metrics and visualizations
-│   └── main.py             # Main pipeline script
-├── requirements.txt
-└── README.md
-```
-
-## Usage
-
-1. Download the dataset from Kaggle and extract it to a directory.
-
-2. Run the full pipeline:
+### Usage:
 
 ```bash
-python src/main.py \
-    --data_dir /path/to/dataset \
-    --output_dir /path/to/output \
-    --model_size m \
-    --epochs 100 \
-    --batch_size 16 \
+python src/inference.py \
+    --model /path/to/model.pt \
+    --input /path/to/images \
+    --output inference_results \
     --tile_size 864 \
-    --overlap 0.15 \
+    --overlap 0.2 \
+    --conf 0.25 \
+    --iou 0.5 \
     --device 0
 ```
 
-Arguments:
-- `--data_dir`: Directory containing the original dataset
-- `--output_dir`: Directory to save all outputs
-- `--model_size`: YOLOv8 model size (n, s, m, l, x)
-- `--epochs`: Number of training epochs
-- `--batch_size`: Training batch size
-- `--tile_size`: Size of image tiles
-- `--overlap`: Overlap ratio between tiles
-- `--device`: Device to use for training/inference (0 for GPU, cpu for CPU)
+### Parameters:
 
-## Pipeline Steps
+- `--model`: Path to the trained model file (best.pt)
+- `--input`: Path to input image or directory containing images
+- `--output`: Directory to save results (default: inference_results)
+- `--tile_size`: Size of tiles (default: 864)
+- `--overlap`: Overlap ratio between tiles (default: 0.2)
+- `--conf`: Confidence threshold (default: 0.25)
+- `--iou`: IoU threshold for NMS (default: 0.5)
+- `--device`: Device to run inference on (default: 0)
 
-1. **Preprocessing**:
-   - Rotate images 90 degrees clockwise
-   - Convert VOC annotations to YOLO format
+### Output:
 
-2. **Dataset Splitting**:
-   - Split into train/val/test sets
-   - Maintain class distribution
+For each input image, the script creates 2 files in the output directory:
+- `{image_name}_det.jpg`: Result image with bounding boxes drawn
+- `{image_name}_det.json`: JSON file containing detailed detection information:
+  ```json
+  [
+    {
+      "class_id": 0,
+      "class_name": "WF",
+      "confidence": 0.95,
+      "bbox": [0.5, 0.5, 0.1, 0.1]  // [x_center, y_center, width, height] normalized
+    }
+  ]
+  ```
 
-3. **Tiling**:
-   - Create overlapping tiles (864x864 pixels)
-   - Adjust bounding boxes for tiles
-   - Filter out small boxes
+## Evaluation
 
-4. **Training**:
-   - Train YOLOv8 model on tiles
-   - Save best model weights
+The `evaluation.py` script calculates model evaluation metrics on the test set.
 
-5. **Validation**:
-   - Validate model on validation set
-   - Generate validation metrics
+### Usage:
 
-6. **Evaluation**:
-   - Evaluate on test set
-   - Generate confusion matrix
-   - Calculate per-class metrics
-
-## Output
-
-The pipeline generates the following outputs in the specified output directory:
-
-```
-output_dir/
-├── processed/          # Rotated images and converted annotations
-├── split/             # Train/val/test splits
-├── tiled/             # Tiled images and annotations
-├── dataset.yaml       # Dataset configuration
-├── model/             # Trained model and weights
-├── validation/        # Validation results
-└── evaluation/        # Evaluation metrics and visualizations
+```bash
+python src/evaluation.py \
+    --gt data/data_for_train_test/test/labels \
+    --pred inference_results \
+    --output eval_results.json \
+    --iou 0.5 \
+    --conf 0.001
 ```
 
-## Evaluation Metrics
+### Parameters:
 
-The evaluation includes:
-- Per-class precision, recall, and F1-score
-- Confusion matrix
-- Visualizations of detections
-- JSON files with detailed metrics
+- `--gt`: Path to directory containing ground truth labels (YOLO format .txt)
+- `--pred`: Path to directory containing detection results (JSON files)
+- `--output`: JSON file to save evaluation results (default: eval_results.json)
+- `--iou`: IoU threshold for determining true positives (default: 0.5)
+- `--conf`: Minimum confidence threshold for predictions (default: 0.001)
 
-## License
+### Output:
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+The result JSON file contains the following metrics:
+```json
+{
+  "mAP@0.5": 0.85,
+  "AP_per_class": {
+    "WF": 0.90,
+    "MR": 0.85,
+    "NC": 0.80
+  },
+  "PRF1_per_class": {
+    "WF": {
+      "precision": 0.92,
+      "recall": 0.88,
+      "f1": 0.90
+    },
+    "MR": {
+      "precision": 0.87,
+      "recall": 0.83,
+      "f1": 0.85
+    },
+    "NC": {
+      "precision": 0.82,
+      "recall": 0.78,
+      "f1": 0.80
+    }
+  }
+}
+```
+
+
+
 
