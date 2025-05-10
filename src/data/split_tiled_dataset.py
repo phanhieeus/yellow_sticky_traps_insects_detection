@@ -71,10 +71,10 @@ def print_stats(tiles, tile_stats, name):
 
 def main():
     base_dir = 'data/tiled_data'
-    src_img_dir = os.path.join(base_dir, 'train/images')
-    src_label_dir = os.path.join(base_dir, 'train/labels')
-    out_train_img = os.path.join(base_dir, 'train_split/images')
-    out_train_label = os.path.join(base_dir, 'train_split/labels')
+    src_img_dir = os.path.join(base_dir, 'images')
+    src_label_dir = os.path.join(base_dir, 'labels')
+    out_train_img = os.path.join(base_dir, 'train/images')
+    out_train_label = os.path.join(base_dir, 'train/labels')
     out_test_img = os.path.join(base_dir, 'test/images')
     out_test_label = os.path.join(base_dir, 'test/labels')
     # Clean output dirs
@@ -92,10 +92,10 @@ def main():
     print_stats(train_tiles, tile_stats, 'Train')
     print_stats(test_tiles, tile_stats, 'Test')
     print(f"\nOutput structure:")
-    print(f"{base_dir}/train_split/images/  # {len(train_tiles)} train tiles")
-    print(f"{base_dir}/train_split/labels/  # {len(train_tiles)} train labels")
-    print(f"{base_dir}/test/images/         # {len(test_tiles)} test tiles")
-    print(f"{base_dir}/test/labels/         # {len(test_tiles)} test labels")
+    print(f"{base_dir}/train/images/  # {len(train_tiles)} train tiles")
+    print(f"{base_dir}/train/labels/  # {len(train_tiles)} train labels")
+    print(f"{base_dir}/test/images/   # {len(test_tiles)} test tiles")
+    print(f"{base_dir}/test/labels/   # {len(test_tiles)} test labels")
 
 if __name__ == '__main__':
     main() 

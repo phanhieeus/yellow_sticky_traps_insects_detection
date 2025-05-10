@@ -9,8 +9,8 @@ OVERLAP = 0.2  # 20%
 # Input/output paths
 TRAIN_IMG_DIR = 'data/data_for_train_test/train/images'
 TRAIN_LABEL_DIR = 'data/data_for_train_test/train/labels'
-OUT_IMG_DIR = 'data/tiled_data/train/images'
-OUT_LABEL_DIR = 'data/tiled_data/train/labels'
+OUT_IMG_DIR = 'data/tiled_data/images'
+OUT_LABEL_DIR = 'data/tiled_data/labels'
 
 os.makedirs(OUT_IMG_DIR, exist_ok=True)
 os.makedirs(OUT_LABEL_DIR, exist_ok=True)
